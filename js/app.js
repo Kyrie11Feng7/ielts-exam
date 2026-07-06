@@ -1424,7 +1424,7 @@
   // ========== 个人学习数据 (localStorage) ==========
   // ==========================================
   const Store = {
-    keys: { progress: 'ielts_progress_v1', wrong: 'ielts_wrong_v1', fav: 'ielts_fav_v1', vocab: 'ielts_vocab_v1', theme: 'ielts_theme_v1' },
+    keys: { progress: 'ielts_progress_v1', wrong: 'ielts_wrong_v1', fav: 'ielts_fav_v1', vocab: 'ielts_vocab_v1', theme: 'ielts_theme_v1', community: 'ielts_community_v1', feedback: 'ielts_feedback_v1', examDate: 'ielts_examdate_v1' },
     _read: function (k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
     _write: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
     getProgress: function () { return this._read(this.keys.progress, {}); },
@@ -1435,6 +1435,12 @@
     setFav: function (f) { this._write(this.keys.fav, f); },
     getVocab: function () { return this._read(this.keys.vocab, []); },
     setVocab: function (v) { this._write(this.keys.vocab, v); },
+    getCommunity: function () { return this._read(this.keys.community, []); },
+    setCommunity: function (v) { this._write(this.keys.community, v); },
+    getFeedback: function () { return this._read(this.keys.feedback, []); },
+    setFeedback: function (v) { this._write(this.keys.feedback, v); },
+    getExamDate: function () { return this._read(this.keys.examDate, ''); },
+    setExamDate: function (d) { this._write(this.keys.examDate, d); },
     getTheme: function () { return this._read(this.keys.theme, 'light'); },
     setTheme: function (t) { this._write(this.keys.theme, t); }
   };
@@ -1535,6 +1541,11 @@
     else if (page === 'wrong') renderWrongBook();
     else if (page === 'fav') renderFavorites();
     else if (page === 'vocab') renderVocab();
+    else if (page === 'speaking') renderSpeakingBank();
+    else if (page === 'writing-tpl') renderWritingTemplates();
+    else if (page === 'vocab-test') renderVocabTest();
+    else if (page === 'community') renderCommunity();
+    else if (page === 'quick') renderQuickPractice();
   }
 
   // 全局委托点击：页面导航 / 收藏 / 错题重做
@@ -1550,6 +1561,12 @@
       favEl.textContent = added ? '★ 已收藏' : '收藏';
       updateNavCounts();
       toast(added ? '已加入收藏' : '已取消收藏');
+      return;
+    }
+    var spkEl = e.target.closest('.spk-btn');
+    if (spkEl) {
+      e.preventDefault();
+      TTS.play(spkEl.getAttribute('data-spk'), spkEl);
       return;
     }
     var redoEl = e.target.closest('[data-start-exam]');
@@ -1674,6 +1691,28 @@
         '<span class="trend-val">' + a.overall + '</span></div>';
     }).join('') : '';
 
+    var ach = computeAchievements();
+    var unlocked = ach.filter(function (a) { return a.ok; }).length;
+    var achHtml = '<div class="dash-section"><h2>🏅 学习成就 (' + unlocked + '/' + ach.length + ')</h2><div class="ach-grid">' +
+      ach.map(function (a) { return '<div class="ach-badge' + (a.ok ? ' unlocked' : '') + '"><div class="ach-icon">' + a.icon + '</div><div class="ach-name">' + escapeHtml(a.name) + '</div><div class="ach-desc">' + escapeHtml(a.desc) + '</div></div>'; }).join('') + '</div></div>';
+
+    var dw = dailyWord();
+    var dailyHtml = '<div class="dash-section"><h2>📅 每日一词</h2><div class="daily-card"><div class="daily-word">' + escapeHtml(dw.w) + '</div><div class="daily-pos">' + escapeHtml(dw.pos || '') + '</div><div class="daily-meaning">' + escapeHtml(dw.m) + '</div><div class="daily-ex">例：' + escapeHtml(dw.ex) + '</div></div></div>';
+
+    var examDate = Store.getExamDate();
+    var countdownHtml = examDate
+      ? (function () { var diff = Math.ceil((new Date(examDate + 'T00:00:00') - new Date()) / 86400000); var dd = diff >= 0 ? diff : 0; return '<div class="dash-section"><h2>⏳ 考试倒计时</h2><div class="countdown-card"><div class="cd-num">' + dd + '</div><div class="cd-label">天<br><span>' + escapeHtml(examDate) + '</span></div><button class="btn-small" id="cd-edit">修改</button></div></div>'; })()
+      : '<div class="dash-section"><h2>⏳ 考试倒计时</h2><div class="countdown-card empty"><p>📌 设置考试目标日期，每天看到倒计时更有动力</p><button class="btn-primary" id="cd-set">设置考试日期</button></div></div>';
+
+    var toolsHtml = '<div class="dash-section"><h2>🧰 学习工具</h2><div class="tools-grid">' +
+      '<div class="tool-card" data-nav-page="speaking"><div class="tool-icon">🗣️</div><h3>口语话题库</h3></div>' +
+      '<div class="tool-card" data-nav-page="writing-tpl"><div class="tool-icon">✍️</div><h3>写作模板库</h3></div>' +
+      '<div class="tool-card" data-nav-page="quick"><div class="tool-icon">⚡</div><h3>快速练习</h3></div>' +
+      '<div class="tool-card" data-nav-page="community"><div class="tool-icon">🌐</div><h3>学习社区</h3></div>' +
+      '<div class="tool-card" data-nav-page="vocab-test"><div class="tool-icon">📝</div><h3>单词测试</h3></div>' +
+      '<div class="tool-card" data-nav-page="vocab"><div class="tool-icon">🔤</div><h3>生词背诵</h3></div>' +
+      '</div></div>';
+
     var statCards =
       '<div class="dash-stats">' +
       '<div class="dash-stat"><div class="ds-num">' + completed + '</div><div class="ds-label">已完成套数</div></div>' +
@@ -1688,11 +1727,14 @@
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>学习仪表盘</span></div>' +
       '<div class="dash-header"><h1>📊 我的学习仪表盘</h1><p>记录你的练习轨迹与进步</p></div>' +
       statCards +
+      toolsHtml + dailyHtml + countdownHtml + achHtml +
       (trendHtml ? '<div class="dash-section"><h2>📈 成绩趋势</h2><div class="trend-bars">' + trendHtml + '</div></div>' : '') +
       (untried ? '<div class="dash-suggest"><span>💡 推荐练习：' + untried.title + '</span><button class="btn-primary" data-start-exam data-book="' + untried.bookId + '" data-test="' + untried.testId + '">开始模拟考试 →</button></div>' : '') +
       '<div class="dash-section"><h2>📅 最近练习</h2><div class="activity-list">' + recentHtml + '</div></div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
 
+    var cdSet = document.getElementById('cd-set'); if (cdSet) cdSet.addEventListener('click', setExamDate);
+    var cdEdit = document.getElementById('cd-edit'); if (cdEdit) cdEdit.addEventListener('click', setExamDate);
     window.scrollTo(0, 0);
   }
 
@@ -1799,7 +1841,7 @@
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词本</span></div>' +
       '<div class="dash-header dash-header-row"><div><h1>📝 我的生词本</h1><p>共 ' + vocab.length + ' 个单词</p></div>' +
-      (vocab.length ? '<button class="btn-primary" id="btn-vocab-study">🎴 开始背诵</button>' : '') + '</div>' +
+      (vocab.length ? '<button class="btn-primary" id="btn-vocab-study">🎴 开始背诵</button><button class="btn-secondary" id="btn-vocab-test">📝 单词测试</button>' : '') + '</div>' +
       '<div class="vocab-add"><input type="text" id="vocab-word" placeholder="单词 (如: sustainable)">' +
       '<input type="text" id="vocab-meaning" placeholder="释义">' +
       '<button class="btn-primary" id="vocab-add-btn">添加</button></div>' +
@@ -1821,6 +1863,8 @@
     document.getElementById('vocab-add-btn').addEventListener('click', doAdd);
     var studyBtn = document.getElementById('btn-vocab-study');
     if (studyBtn) studyBtn.addEventListener('click', function () { renderVocabStudy(); });
+    var testBtn = document.getElementById('btn-vocab-test');
+    if (testBtn) testBtn.addEventListener('click', function () { renderVocabTest(); });
     document.getElementById('vocab-word').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
     document.getElementById('vocab-meaning').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
     document.querySelectorAll('.btn-del-vocab').forEach(function (btn) {
@@ -2069,6 +2113,350 @@
       if (stopBtn) stopBtn.addEventListener('click', function () { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); });
       if (delBtn) delBtn.addEventListener('click', function () { idbDel(key, function () { if (playArea) playArea.innerHTML = ''; delBtn.style.display = 'none'; setStatus('已删除录音'); }); });
     });
+  }
+
+  // ==========================================
+  // ========== 新功能（第三轮）：口语库 / 写作模板 / 单词测试 / 社区反馈 / 满意度 ==========
+  // ==========================================
+
+  function breadcrumb(name) {
+    return '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>' + escapeHtml(name) + '</span></div>';
+  }
+  function backHome() {
+    return '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+  }
+  function spk(text) {
+    return ' <button class="spk-btn" data-spk="' + escapeHtml(text) + '" title="朗读">🔊</button>';
+  }
+  function bindClick(sel, fn) {
+    document.querySelectorAll(sel).forEach(function (el) { el.addEventListener('click', function () { fn(el); }); });
+  }
+
+  // ---------- 成就系统 ----------
+  function computeAchievements() {
+    var prog = Store.getProgress();
+    var keys = Object.keys(prog);
+    var completed = keys.length;
+    var streak = computeStreak();
+    var fav = Store.getFav().length;
+    var vocab = Store.getVocab().length;
+    var bestOverall = 0, bestL = 0, bestR = 0;
+    keys.forEach(function (k) {
+      var p = prog[k];
+      if (p.bestOverall > bestOverall) bestOverall = p.bestOverall;
+      if (p.bestL > bestL) bestL = p.bestL;
+      if (p.bestR > bestR) bestR = p.bestR;
+    });
+    return [
+      { icon: '🎉', name: '首战告捷', desc: '完成第 1 套真题', ok: completed >= 1 },
+      { icon: '🔥', name: '三日打卡', desc: '连续学习 3 天', ok: streak >= 3 },
+      { icon: '🔥', name: '一周坚持', desc: '连续学习 7 天', ok: streak >= 7 },
+      { icon: '📚', name: '小有积累', desc: '完成 5 套真题', ok: completed >= 5 },
+      { icon: '📚', name: '备考达人', desc: '完成 10 套真题', ok: completed >= 10 },
+      { icon: '💯', name: '总分 7.0', desc: '单次总分达 Band 7.0', ok: bestOverall >= 7.0 },
+      { icon: '🎯', name: '单项满贯', desc: '单模块答错 ≤ 4 题', ok: bestL >= 36 || bestR >= 36 },
+      { icon: '⭐', name: '收藏控', desc: '收藏 3 套真题', ok: fav >= 3 },
+      { icon: '📝', name: '词海拾贝', desc: '生词本积累 20 词', ok: vocab >= 20 }
+    ];
+  }
+
+  // ---------- 每日一词 ----------
+  var DAILY_WORDS = [
+    { w: 'sustainable', pos: 'adj.', m: '可持续的', ex: 'We need a sustainable approach to energy.' },
+    { w: 'significant', pos: 'adj.', m: '显著的，重要的', ex: 'There was a significant increase in sales.' },
+    { w: 'controversial', pos: 'adj.', m: '有争议的', ex: 'It remains a controversial topic.' },
+    { w: 'inevitable', pos: 'adj.', m: '不可避免的', ex: 'Change is inevitable in modern society.' },
+    { w: 'consequence', pos: 'n.', m: '后果，结果', ex: 'This has serious consequences.' },
+    { w: 'fundamental', pos: 'adj.', m: '基本的，根本的', ex: 'Education is fundamental to development.' },
+    { w: 'phenomenon', pos: 'n.', m: '现象', ex: 'Climate change is a global phenomenon.' },
+    { w: 'demonstrate', pos: 'v.', m: '证明，展示', ex: 'The study demonstrates a clear link.' },
+    { w: 'nevertheless', pos: 'adv.', m: '然而，不过', ex: 'It is costly; nevertheless, it is worth it.' },
+    { w: 'approximately', pos: 'adv.', m: '大约', ex: 'The cost is approximately 100 dollars.' },
+    { w: 'consequently', pos: 'adv.', m: '因此，结果', ex: 'He was late; consequently he missed it.' },
+    { w: 'distinct', pos: 'adj.', m: '明显的，不同的', ex: 'There are two distinct groups.' },
+    { w: 'implement', pos: 'v.', m: '实施，执行', ex: 'The policy was implemented last year.' },
+    { w: 'accumulate', pos: 'v.', m: '积累', ex: 'Data began to accumulate rapidly.' },
+    { w: 'proportion', pos: 'n.', m: '比例，部分', ex: 'A large proportion of users agreed.' },
+    { w: 'restrict', pos: 'v.', m: '限制', ex: 'Access is restricted to members.' },
+    { w: 'substitute', pos: 'v./n.', m: '替代', ex: 'We can substitute oil with solar power.' },
+    { w: 'vulnerable', pos: 'adj.', m: '脆弱的，易受伤害的', ex: 'The poor are most vulnerable.' },
+    { w: 'abundant', pos: 'adj.', m: '丰富的', ex: 'The region has abundant resources.' },
+    { w: 'comprehensive', pos: 'adj.', m: '全面的', ex: 'A comprehensive review is needed.' },
+    { w: 'correlation', pos: 'n.', m: '相关性', ex: 'There is a correlation between the two.' },
+    { w: 'inequality', pos: 'n.', m: '不平等', ex: 'Economic inequality is rising.' },
+    { w: 'mitigate', pos: 'v.', m: '缓解，减轻', ex: 'Steps were taken to mitigate the risk.' },
+    { w: 'paradox', pos: 'n.', m: '悖论', ex: 'It is a curious paradox.' }
+  ];
+  function dailyWord() {
+    var d = new Date();
+    var idx = (d.getFullYear() * 372 + (d.getMonth() + 1) * 31 + d.getDate()) % DAILY_WORDS.length;
+    return DAILY_WORDS[idx];
+  }
+
+  // ---------- 口语话题库 ----------
+  var sbCat = 0, sbTopic = null;
+  function renderSpeakingBank() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '口语话题库 - 雅思真题库';
+    var bank = (typeof SPEAKING_BANK !== 'undefined') ? SPEAKING_BANK : [];
+    if (!bank.length) { app.innerHTML = breadcrumb('口语话题库') + '<div class="empty-state"><div class="empty-icon">🗣️</div><h2>题库加载中…</h2></div>' + backHome(); return; }
+    if (sbTopic === null) {
+      var cat = bank[sbCat];
+      var tabs = '<div class="cat-tabs">' + bank.map(function (c, i) {
+        return '<button class="cat-tab' + (i === sbCat ? ' active' : '') + '" data-sb-cat="' + i + '">' + escapeHtml(c.category) + '</button>';
+      }).join('') + '</div>';
+      var topics = cat.topics.map(function (t, ti) {
+        return '<div class="topic-card" data-sb-topic="' + ti + '"><div class="topic-icon">🗣️</div><h3>' + escapeHtml(t.title) + '</h3><p>Part1 · Part2 · Part3 完整范文</p><span class="topic-go">查看 →</span></div>';
+      }).join('');
+      app.innerHTML = breadcrumb('口语话题库') +
+        '<div class="dash-header"><h1>🗣️ 雅思口语话题库</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，含 Part1/2/3 范文与技巧</p></div>' +
+        tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
+      bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
+      bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); renderSpeakingBank(); });
+    } else {
+      var t = bank[sbCat].topics[sbTopic];
+      var p1 = t.part1.map(function (x) {
+        return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
+      }).join('');
+      var p2 = '<div class="qa-block"><div class="qa-cue">' + escapeHtml(t.part2.cueCard).replace(/\n/g, '<br>') + '</div><div class="qa-a">' + escapeHtml(t.part2.modelAnswer).replace(/\n/g, '<br>') + spk(t.part2.modelAnswer) + '</div><div class="qa-tips">💡 ' + escapeHtml(t.part2.tips) + '</div></div>';
+      var p3 = t.part3.map(function (x) {
+        return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
+      }).join('');
+      app.innerHTML = breadcrumb('口语话题库') +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
+        '<div class="speak-detail"><h2>Part 1</h2>' + p1 + '<h2>Part 2 · 话题卡</h2>' + p2 + '<h2>Part 3</h2>' + p3 + '</div>' +
+        '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
+      var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
+      var b2 = document.getElementById('sb-back2'); if (b2) b2.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
+    }
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 写作结构模板库 ----------
+  var wtType = 'task1', wtIdx = null;
+  function renderWritingTemplates() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '写作模板库 - 雅思真题库';
+    var tpl = (typeof WRITING_TEMPLATES !== 'undefined') ? WRITING_TEMPLATES : { task1: [], task2: [] };
+    if (wtIdx === null) {
+      var tabs = '<div class="cat-tabs"><button class="cat-tab' + (wtType === 'task1' ? ' active' : '') + '" data-wt-type="task1">Task 1 图表类</button><button class="cat-tab' + (wtType === 'task2' ? ' active' : '') + '" data-wt-type="task2">Task 2 议论文</button></div>';
+      var list = (wtType === 'task1' ? tpl.task1 : tpl.task2).map(function (x, i) {
+        return '<div class="topic-card" data-wt-idx="' + i + '"><div class="topic-icon">✍️</div><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(x.when) + '</p><span class="topic-go">查看模板 →</span></div>';
+      }).join('');
+      app.innerHTML = breadcrumb('写作模板库') +
+        '<div class="dash-header"><h1>✍️ 雅思写作结构模板库</h1><p>Task1 七大图表 + Task2 五大题型，附开头/主体/结论公式与高分词汇</p></div>' +
+        tabs + '<div class="topic-grid">' + list + '</div>' + backHome();
+      bindClick('[data-wt-type]', function (el) { wtType = el.getAttribute('data-wt-type'); wtIdx = null; renderWritingTemplates(); });
+      bindClick('[data-wt-idx]', function (el) { wtIdx = parseInt(el.getAttribute('data-wt-idx'), 10); renderWritingTemplates(); });
+    } else {
+      var x = (wtType === 'task1' ? tpl.task1 : tpl.task2)[wtIdx];
+      var struct = x.structure.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('');
+      var phrases = (x.phrases || []).map(function (p) { return '<span class="conn-chip">' + escapeHtml(p) + '</span>'; }).join('');
+      var vocab = (x.vocab || []).map(function (v) { return '<span class="conn-chip">' + escapeHtml(v) + '</span>'; }).join('');
+      var extra = '';
+      if (wtType === 'task1') {
+        extra = '<div class="wf-conn">📌 高分短语：' + phrases + '</div><div class="wf-conn">🔑 核心词汇：' + vocab + '</div>';
+      } else {
+        var linkers = (x.linkers || []).map(function (l) { return '<span class="conn-chip">' + escapeHtml(l) + '</span>'; }).join('');
+        var mistakes = (x.mistakes || []).map(function (m) { return '<li>' + escapeHtml(m) + '</li>'; }).join('');
+        extra = '<div class="wf-conn">🔗 连接词：' + linkers + '</div><div class="wf-title">⚠️ 常见错误</div><ul class="wf-issues">' + mistakes + '</ul>';
+      }
+      app.innerHTML = breadcrumb('写作模板库') +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + '</h1><p>' + escapeHtml(x.when) + '</p></div><button class="btn-back" id="wt-back">← 返回</button></div>' +
+        '<div class="wt-detail">' +
+        '<h2>📐 结构公式</h2><ol class="wt-struct">' + struct + '</ol>' +
+        '<div class="wf-title">📝 开头模板</div><p class="wt-formula">' + escapeHtml(x.introFormula) + '</p>' +
+        (x.overviewTips ? '<div class="wf-title">🔍 概述要点</div><p class="wt-formula">' + escapeHtml(x.overviewTips) + '</p>' : '') +
+        (x.bodyFormula ? '<div class="wf-title">🧱 主体模板</div><p class="wt-formula">' + escapeHtml(x.bodyFormula) + '</p>' : '') +
+        (x.conclusionFormula ? '<div class="wf-title">🏁 结论模板</div><p class="wt-formula">' + escapeHtml(x.conclusionFormula) + '</p>' : '') +
+        extra + '</div>' +
+        '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="wt-back2">← 返回模板列表</button></div>';
+      var b1 = document.getElementById('wt-back'); if (b1) b1.addEventListener('click', function () { wtIdx = null; renderWritingTemplates(); });
+      var b2 = document.getElementById('wt-back2'); if (b2) b2.addEventListener('click', function () { wtIdx = null; renderWritingTemplates(); });
+    }
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 单词测试模式 ----------
+  var vtQueue = [], vtPos = 0, vtCorrect = 0;
+  function renderVocabTest() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    var list = Store.getVocab();
+    if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
+    document.title = '单词测试 - 雅思真题库';
+    var shuffled = list.slice().sort(function () { return Math.random() - 0.5; });
+    var total = Math.min(shuffled.length, 10);
+    vtQueue = shuffled.slice(0, total); vtPos = 0; vtCorrect = 0;
+    questionVocab();
+  }
+  function questionVocab() {
+    if (vtPos >= vtQueue.length) { showVocabResult(); return; }
+    var v = vtQueue[vtPos];
+    var pool = Store.getVocab().filter(function (x) { return x.word !== v.word; });
+    var opts = [v.word];
+    while (opts.length < 4 && pool.length) {
+      var r = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      if (opts.indexOf(r.word) === -1) opts.push(r.word);
+    }
+    opts.sort(function () { return Math.random() - 0.5; });
+    app.innerHTML = breadcrumb('单词测试') +
+      '<div class="study-progress"><div class="study-bar" style="width:' + Math.round((vtPos / vtQueue.length) * 100) + '%"></div></div>' +
+      '<div class="study-counter">第 ' + (vtPos + 1) + ' / ' + vtQueue.length + ' 题</div>' +
+      '<div class="flashcard"><div class="flash-word" style="font-size:28px;">《' + escapeHtml(v.meaning) + '》</div>' +
+      '<div class="vocab-q">请选出正确的英文单词：</div>' +
+      '<div class="vt-opts">' + opts.map(function (o) { return '<button class="vt-opt" data-word="' + escapeHtml(o) + '">' + escapeHtml(o) + '</button>'; }).join('') + '</div></div>' +
+      '<div style="text-align:center;"><button class="btn-back" data-nav-page="vocab">退出测试</button></div>';
+    bindClick('.vt-opt', function (el) {
+      var pick = el.getAttribute('data-word');
+      var correct = pick === v.word;
+      if (correct) vtCorrect++;
+      el.classList.add(correct ? 'vt-correct' : 'vt-wrong');
+      document.querySelectorAll('.vt-opt').forEach(function (b) { b.disabled = true; if (b.getAttribute('data-word') === v.word) b.classList.add('vt-correct'); });
+      var note = document.createElement('div');
+      note.className = 'vt-note ' + (correct ? 'wf-ok' : 'wf-muted');
+      note.innerHTML = (correct ? '✅ 答对了！' : '❌ 正确答案：<b>' + escapeHtml(v.word) + '</b>');
+      var card = document.querySelector('.flashcard'); if (card) card.appendChild(note);
+      setTimeout(function () { vtPos++; questionVocab(); }, 1100);
+    });
+    window.scrollTo(0, 0);
+  }
+  function showVocabResult() {
+    app.innerHTML = breadcrumb('单词测试') +
+      '<div class="study-done"><div class="study-emoji">📝</div><h2>测试结果</h2><p>答对 ' + vtCorrect + ' / ' + vtQueue.length + ' 题（' + (vtCorrect / vtQueue.length * 100).toFixed(0) + '%）</p>' +
+      '<button class="btn-primary" id="vt-again">🔁 再来一组</button> <button class="btn-back" data-nav-page="vocab">返回生词本</button></div>';
+    var a = document.getElementById('vt-again'); if (a) a.addEventListener('click', function () { renderVocabTest(); });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 社区分享 + 用户反馈 ----------
+  function renderCommunity() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '学习社区 - 雅思真题库';
+    var posts = Store.getCommunity();
+    var feedHtml = posts.length ? posts.map(function (p) {
+      return '<div class="comm-post"><div class="comm-post-body">' + escapeHtml(p.text) + '</div><div class="comm-post-meta">' + (p.score ? '<span class="comm-score">🏆 ' + escapeHtml(p.score) + '</span>' : '') + '<span>' + p.date + '</span></div></div>';
+    }).join('') : '<div class="empty-state small"><p>还没有动态，发布你的第一条学习打卡吧！</p></div>';
+    var tips = [
+      { t: '听力抓关键词', d: '听前快速浏览题目，圈出定位词，听时专注同义替换。' },
+      { t: '阅读先看题', d: '先读题干再读文章，带着问题找答案，省时准确。' },
+      { t: '写作重结构', d: 'Task2 四段式最稳：引入-论点1-论点2-结论，每段一个中心。' },
+      { t: '口语说满时长', d: 'Part2 尽量说满 2 分钟，用具体例子和细节撑起内容。' }
+    ];
+    var tipsHtml = tips.map(function (x) { return '<div class="tip-card"><h4>💡 ' + escapeHtml(x.t) + '</h4><p>' + escapeHtml(x.d) + '</p></div>'; }).join('');
+    var fb = Store.getFeedback();
+    var fbHtml = fb.length ? fb.slice().reverse().map(function (f) {
+      return '<div class="comm-post"><div class="comm-post-body">[' + escapeHtml(f.type) + '] ' + escapeHtml(f.msg) + '</div><div class="comm-post-meta"><span>' + f.date + '</span>' + (f.contact ? '<span>联系：' + escapeHtml(f.contact) + '</span>' : '') + '</div></div>';
+    }).join('') : '<p class="wf-muted">暂无反馈记录</p>';
+    app.innerHTML = breadcrumb('学习社区') +
+      '<div class="dash-header"><h1>🌐 学习社区 & 反馈</h1><p>分享你的学习动态，或把使用建议/问题反馈给开发者</p></div>' +
+      '<div class="comm-grid">' +
+      '<div class="comm-col"><h2>📣 我的学习动态</h2>' +
+      '<div class="comm-form"><textarea id="comm-text" rows="3" placeholder="分享一句学习感悟、今日打卡或成绩…"></textarea>' +
+      '<div class="comm-form-row"><input type="text" id="comm-score" placeholder="成绩(可选, 如 Band 6.5)"><button class="btn-primary" id="comm-post-btn">发布</button></div></div>' +
+      '<div class="comm-feed">' + feedHtml + '</div></div>' +
+      '<div class="comm-col"><h2>⭐ 精选备考经验</h2><div class="tip-list">' + tipsHtml + '</div>' +
+      '<h2 style="margin-top:18px;">💬 意见反馈</h2>' +
+      '<div class="comm-form"><select id="fb-type"><option value="建议">💡 功能建议</option><option value="问题">🐞 遇到问题</option><option value="其他">💬 其他</option></select>' +
+      '<textarea id="fb-msg" rows="3" placeholder="描述你遇到的问题或想加的功能…"></textarea>' +
+      '<input type="text" id="fb-contact" placeholder="联系方式(可选, 微信/邮箱)">' +
+      '<button class="btn-primary" id="fb-btn">提交反馈（打开 GitHub Issue）</button>' +
+      '<p class="wf-muted" style="font-size:12px;">提交会打开 GitHub 反馈页并预填内容，你点一下「Submit new issue」即可，开发者会及时看到并改进。</p></div>' +
+      '<h3 style="margin-top:14px;">我的反馈记录</h3><div class="comm-feed">' + fbHtml + '</div>' +
+      '</div></div>' + backHome();
+    var pbtn = document.getElementById('comm-post-btn');
+    if (pbtn) pbtn.addEventListener('click', function () {
+      var txt = document.getElementById('comm-text').value.trim();
+      if (!txt) { toast('请先输入内容'); return; }
+      var arr = Store.getCommunity(); arr.unshift({ text: txt, score: document.getElementById('comm-score').value.trim(), date: todayStr() });
+      Store.setCommunity(arr); renderCommunity(); toast('已发布');
+    });
+    var fbtn = document.getElementById('fb-btn');
+    if (fbtn) fbtn.addEventListener('click', function () {
+      var type = document.getElementById('fb-type').value;
+      var msg = document.getElementById('fb-msg').value.trim();
+      if (!msg) { toast('请填写反馈内容'); return; }
+      var contact = document.getElementById('fb-contact').value.trim();
+      var body = '类型：' + type + '\n页面：' + document.title + '\n浏览器：' + (navigator.userAgent || '') + '\n时间：' + new Date().toISOString() + '\n\n' + msg + '\n\n联系方式：' + (contact || '（未提供）');
+      var url = 'https://github.com/Kyrie11Feng7/ielts-exam/issues/new?title=' + encodeURIComponent('[' + type + '] ' + msg.slice(0, 30)) + '&body=' + encodeURIComponent(body) + '&labels=feedback';
+      window.open(url, '_blank');
+      var fbl = Store.getFeedback(); fbl.push({ type: type, msg: msg, contact: contact, date: todayStr() }); Store.setFeedback(fbl);
+      toast('已生成反馈链接，请在打开的页面提交');
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 快速练习（随机混合小测）----------
+  function buildQuickPool() {
+    var pool = [];
+    IELTS_DATA.books.forEach(function (b) {
+      b.tests.forEach(function (t) {
+        var src = b.fullTitle + ' · ' + t.title;
+        (t.listening.sections || []).forEach(function (s) {
+          (s.questions || []).forEach(function (q) { if (q.a) pool.push({ module: '听力', q: q.q, a: String(q.a), src: src, type: q.type || '' }); });
+        });
+        (t.reading.passages || []).forEach(function (p) {
+          (p.questions || []).forEach(function (q) { if (q.a) pool.push({ module: '阅读', q: q.q, a: String(q.a), src: src, type: q.type || '' }); });
+        });
+      });
+    });
+    return pool;
+  }
+  var qpQuestions = [], qpPos = 0, qpCorrect = 0;
+  function renderQuickPractice() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '快速练习 - 雅思真题库';
+    var pool = buildQuickPool();
+    pool.sort(function () { return Math.random() - 0.5; });
+    qpQuestions = pool.slice(0, 10); qpPos = 0; qpCorrect = 0;
+    app.innerHTML = breadcrumb('快速练习') +
+      '<div class="dash-header"><h1>⚡ 快速练习</h1><p>从全部真题中随机抽取 10 题，随时自测</p></div>' +
+      '<div class="qp-box" id="qp-box"></div>' +
+      '<div style="text-align:center;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+    showQp();
+  }
+  function showQp() {
+    var box = document.getElementById('qp-box');
+    if (!box) return;
+    if (qpPos >= qpQuestions.length) {
+      box.innerHTML = '<div class="study-done"><div class="study-emoji">⚡</div><h2>练习完成</h2><p>答对 ' + qpCorrect + ' / ' + qpQuestions.length + ' 题</p><button class="btn-primary" id="qp-again">🔁 再来一组</button></div>';
+      var a = document.getElementById('qp-again'); if (a) a.addEventListener('click', renderQuickPractice);
+      return;
+    }
+    var item = qpQuestions[qpPos];
+    box.innerHTML = '<div class="study-counter">第 ' + (qpPos + 1) + ' / ' + qpQuestions.length + ' 题 · ' + item.module + '</div>' +
+      '<div class="qp-q">' + escapeHtml(item.q) + '</div>' +
+      '<div class="qp-src">📍 ' + escapeHtml(item.src) + '</div>' +
+      '<input type="text" id="qp-input" class="qp-input" placeholder="输入你的答案…" autocomplete="off">' +
+      '<div class="study-actions"><button class="btn-primary" id="qp-submit">提交</button></div>' +
+      '<div id="qp-fb"></div>';
+    var input = document.getElementById('qp-input');
+    input.focus();
+    function submit() {
+      var ans = input.value.trim().toLowerCase();
+      if (!ans) { toast('请输入答案'); return; }
+      var correct = ans === item.a.trim().toLowerCase();
+      if (correct) qpCorrect++;
+      var fb = document.getElementById('qp-fb');
+      fb.innerHTML = '<div class="vt-note ' + (correct ? 'wf-ok' : 'wf-muted') + '">' + (correct ? '✅ 正确！' : '❌ 正确答案：<b>' + escapeHtml(item.a) + '</b>') + '</div>';
+      document.getElementById('qp-submit').disabled = true; input.disabled = true;
+      setTimeout(function () { qpPos++; showQp(); }, 1300);
+    }
+    document.getElementById('qp-submit').addEventListener('click', submit);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+    window.scrollTo(0, 0);
+  }
+
+  function setExamDate() {
+    var d = window.prompt('设置考试目标日期 (格式 YYYY-MM-DD)：', Store.getExamDate() || '');
+    if (d === null) return;
+    d = d.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) { Store.setExamDate(d); renderDashboard(); toast('已设置考试日期'); }
+    else toast('日期格式不正确，请用 YYYY-MM-DD');
   }
 
   // ========== 初始化 ==========
