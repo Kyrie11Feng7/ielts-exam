@@ -148,9 +148,15 @@
     if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
     document.title = '雅思真题库 - 历年雅思官方真题与答案';
 
-    const bookCards = IELTS_DATA.books.map(function (book) {
+    const prog = Store.getProgress();
+    const bookCards = IELTS_DATA.books.filter(function (book) {
+      if (!searchQuery) return true;
+      var hay = (book.title + ' ' + book.fullTitle + ' ' + book.desc + ' ' + book.year).toLowerCase();
+      return hay.indexOf(searchQuery) !== -1;
+    }).map(function (book) {
       const testCount = book.tests.length;
       const hasContent = testCount > 0;
+      var completedForBook = book.tests.filter(function (t) { return prog[book.id + '-' + t.id]; }).length;
       var badge;
       if (currentMode === 'exam') {
         badge = hasContent
@@ -160,6 +166,9 @@
         badge = hasContent
           ? '<span class="badge badge-available">已收录 ' + testCount + ' 套</span>'
           : '<span class="badge badge-soon">即将收录</span>';
+      }
+      if (completedForBook > 0) {
+        badge += '<span class="badge badge-done">✅ 已练 ' + completedForBook + ' 套</span>';
       }
 
       return (
@@ -176,6 +185,10 @@
         '</div>'
       );
     }).join('');
+
+    var searchBannerHtml = searchQuery
+      ? '<div class="search-banner">🔍 搜索 "<b>' + escapeHtml(searchQuery) + '</b>" 的结果 <button class="search-clear" id="search-clear">清除</button></div>'
+      : '';
 
     var modeToggleHtml =
       '<div class="mode-toggle-wrapper">' +
@@ -221,6 +234,7 @@
       '</section>' +
       modeToggleHtml +
       '<section class="books-section">' +
+      searchBannerHtml +
       '<div class="section-header">' +
       '<h2>选择真题系列</h2>' +
       '<p>' + (currentMode === 'exam' ? '点击卡片进入模拟考试' : '点击下方卡片进入对应真题') + '</p>' +
@@ -249,6 +263,16 @@
         renderBook(bookId);
       });
     });
+
+    var clearBtn = document.getElementById('search-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        searchQuery = '';
+        var inp = document.getElementById('global-search');
+        if (inp) inp.value = '';
+        renderHome();
+      });
+    }
   }
 
   // ========== 练习模式：书籍详情 ==========
@@ -273,7 +297,7 @@
       var buttonIcon = currentMode === 'exam' ? '📝' : '📖';
       return (
         '<div class="test-card" data-test="' + test.id + '">' +
-        '<div class="test-card-header"><h3>' + test.title + '</h3><span class="test-arrow">→</span></div>' +
+        '<div class="test-card-header"><h3>' + test.title + '</h3>' + favStarHtml(bookId + '-' + test.id) + '<span class="test-arrow">→</span></div>' +
         '<div class="test-sections">' +
         '<div class="test-section-tag">🎧 听力</div>' +
         '<div class="test-section-tag">📖 阅读</div>' +
@@ -296,7 +320,8 @@
 
     bindNav();
     document.querySelectorAll('.test-card').forEach(function (card) {
-      card.addEventListener('click', function () {
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('[data-fav]')) return;
         const testId = parseInt(this.dataset.test, 10);
         if (currentMode === 'exam') {
           renderExamIntro(bookId, testId);
@@ -335,6 +360,7 @@
     bindNav();
     bindAnswerToggles();
     bindAudioPlayers(bookId, testId);
+    bindVocabSelection();
     window.scrollTo(0, 0);
   }
 
@@ -1191,6 +1217,10 @@
     var rBand = calculateBandScore(rCorrect, rTotal);
     var overallBand = ((lBand + rBand) / 2).toFixed(1);
 
+    // 保存进度与错题到本地
+    saveExamResult(bookId, testId, lCorrect, lTotal, rCorrect, rTotal, lBand, rBand, lDetails, rDetails);
+    updateNavCounts();
+
     // 用时
     var timeUsed = Math.floor((Date.now() - examState.startTime) / 1000);
     var mins = Math.floor(timeUsed / 60);
@@ -1291,7 +1321,7 @@
       '<div class="exam-results">' +
       '<div class="result-header">' +
       '<h1>📊 考试成绩报告</h1>' +
-      '<p>' + book.fullTitle + ' · ' + test.title + ' · 用时 ' + mins + '分' + secs + '秒</p>' +
+      '<p>' + book.fullTitle + ' · ' + test.title + ' · 用时 ' + mins + '分' + secs + '秒 · ✅ 已保存</p>' +
       '</div>' +
       scoreCards +
       '<div class="result-actions">' +
@@ -1350,6 +1380,415 @@
     });
   }
 
+  // ==========================================
+  // ========== 个人学习数据 (localStorage) ==========
+  // ==========================================
+  const Store = {
+    keys: { progress: 'ielts_progress_v1', wrong: 'ielts_wrong_v1', fav: 'ielts_fav_v1', vocab: 'ielts_vocab_v1', theme: 'ielts_theme_v1' },
+    _read: function (k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+    _write: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    getProgress: function () { return this._read(this.keys.progress, {}); },
+    setProgress: function (p) { this._write(this.keys.progress, p); },
+    getWrong: function () { return this._read(this.keys.wrong, []); },
+    setWrong: function (w) { this._write(this.keys.wrong, w); },
+    getFav: function () { return this._read(this.keys.fav, []); },
+    setFav: function (f) { this._write(this.keys.fav, f); },
+    getVocab: function () { return this._read(this.keys.vocab, []); },
+    setVocab: function (v) { this._write(this.keys.vocab, v); },
+    getTheme: function () { return this._read(this.keys.theme, 'light'); },
+    setTheme: function (t) { this._write(this.keys.theme, t); }
+  };
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function isFaved(key) { return Store.getFav().indexOf(key) !== -1; }
+  function toggleFav(key) {
+    var fav = Store.getFav();
+    var i = fav.indexOf(key);
+    if (i === -1) fav.push(key); else fav.splice(i, 1);
+    Store.setFav(fav);
+    return i === -1;
+  }
+
+  function favStarHtml(key) {
+    var faved = isFaved(key);
+    return '<span class="fav-star' + (faved ? ' faved' : '') + '" data-fav="' + key + '" title="收藏此题">收藏</span>';
+  }
+
+  // 交卷后保存进度与错题
+  function saveExamResult(bookId, testId, lCorrect, lTotal, rCorrect, rTotal, lBand, rBand, lDetails, rDetails) {
+    var prog = Store.getProgress();
+    var pkey = bookId + '-' + testId;
+    var prev = prog[pkey] || { attempts: 0, bestL: 0, bestR: 0, bestOverall: 0, history: [] };
+    prev.attempts += 1;
+    prev.bestL = Math.max(prev.bestL, lCorrect);
+    prev.bestR = Math.max(prev.bestR, rCorrect);
+    prev.bestOverall = Math.max(prev.bestOverall, parseFloat(((lBand + rBand) / 2).toFixed(1)));
+    prev.history = prev.history || [];
+    prev.history.push({ date: todayStr(), l: lCorrect + '/' + lTotal, r: rCorrect + '/' + rTotal, overall: parseFloat(((lBand + rBand) / 2).toFixed(1)) });
+    if (prev.history.length > 20) prev.history = prev.history.slice(-20);
+    prog[pkey] = prev;
+    Store.setProgress(prog);
+
+    var wrong = Store.getWrong();
+    var newWrongMap = {};
+    lDetails.concat(rDetails).forEach(function (d) {
+      if (!d.isCorrect && d.userAns.trim()) {
+        newWrongMap[d.key] = {
+          id: bookId + '-' + testId + '-' + d.key,
+          bookId: bookId, testId: testId,
+          module: d.key.charAt(0) === 'L' ? 'listening' : 'reading',
+          qKey: d.key, question: d.q.q, userAnswer: d.userAns,
+          correctAnswer: d.q.a, type: d.q.type || '', date: todayStr()
+        };
+      }
+    });
+    // 本次答对的旧错题 -> 从错题本移除（已掌握）
+    wrong = wrong.filter(function (w) { return !(w.bookId === bookId && w.testId === testId && !newWrongMap[w.qKey]); });
+    Object.keys(newWrongMap).forEach(function (k) {
+      var existing = wrong.find(function (w) { return w.id === newWrongMap[k].id; });
+      if (existing) { existing.userAnswer = newWrongMap[k].userAnswer; existing.date = newWrongMap[k].date; }
+      else wrong.push(newWrongMap[k]);
+    });
+    Store.setWrong(wrong);
+  }
+
+  function computeStreak() {
+    var prog = Store.getProgress();
+    var set = {};
+    Object.keys(prog).forEach(function (k) {
+      (prog[k].history || []).forEach(function (h) { set[h.date] = true; });
+    });
+    var d = new Date();
+    var ds = function (x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+    if (!set[ds(d)]) d.setDate(d.getDate() - 1);
+    var streak = 0;
+    while (set[ds(d)]) { streak++; d.setDate(d.getDate() - 1); }
+    return streak;
+  }
+
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 10);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300); }, 1800);
+  }
+
+  function updateNavCounts() {
+    var favC = document.getElementById('fav-count');
+    var wrongC = document.getElementById('wrong-count');
+    if (favC) favC.textContent = Store.getFav().length ? Store.getFav().length : '';
+    if (wrongC) wrongC.textContent = Store.getWrong().length ? Store.getWrong().length : '';
+  }
+
+  // ========== 页面导航 ==========
+  function navigateTo(page) {
+    if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
+    TTS.stop();
+    if (page === 'home') renderHome();
+    else if (page === 'dashboard') renderDashboard();
+    else if (page === 'wrong') renderWrongBook();
+    else if (page === 'fav') renderFavorites();
+    else if (page === 'vocab') renderVocab();
+  }
+
+  // 全局委托点击：页面导航 / 收藏 / 错题重做
+  document.addEventListener('click', function (e) {
+    var navEl = e.target.closest('[data-nav-page]');
+    if (navEl) { e.preventDefault(); navigateTo(navEl.getAttribute('data-nav-page')); return; }
+    var favEl = e.target.closest('[data-fav]');
+    if (favEl) {
+      e.preventDefault(); e.stopPropagation();
+      var key = favEl.getAttribute('data-fav');
+      var added = toggleFav(key);
+      favEl.classList.toggle('faved', added);
+      favEl.textContent = added ? '★ 已收藏' : '收藏';
+      updateNavCounts();
+      toast(added ? '已加入收藏' : '已取消收藏');
+      return;
+    }
+    var redoEl = e.target.closest('[data-start-exam]');
+    if (redoEl) {
+      e.preventDefault();
+      var b = parseInt(redoEl.getAttribute('data-book'), 10);
+      var t = parseInt(redoEl.getAttribute('data-test'), 10);
+      if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
+      TTS.stop();
+      renderExamIntro(b, t);
+      return;
+    }
+  });
+
+  // ========== 深色模式 ==========
+  function applyTheme() {
+    var t = Store.getTheme();
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+  }
+  function bindThemeToggle() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var t = Store.getTheme() === 'dark' ? 'light' : 'dark';
+      Store.setTheme(t); applyTheme();
+    });
+  }
+
+  // ========== 搜索 ==========
+  var searchQuery = '';
+  function bindSearch() {
+    var inp = document.getElementById('global-search');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      searchQuery = this.value.trim().toLowerCase();
+      if (currentView.bookId === null && currentView.testId === null) renderHome();
+      else renderHome();
+    });
+  }
+
+  // ========== PWA 注册 ==========
+  function registerSW() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    }
+  }
+
+  // ========== 生词本：阅读文章双击取词 ==========
+  function bindVocabSelection() {
+    document.querySelectorAll('.passage-text-body').forEach(function (body) {
+      if (body.dataset.vocabBound) return;
+      body.dataset.vocabBound = '1';
+      body.addEventListener('dblclick', function () {
+        var sel = window.getSelection();
+        var text = sel ? sel.toString().trim() : '';
+        if (!text || text.indexOf(' ') !== -1) return;
+        var meaning = window.prompt('为单词 "' + text + '" 添加释义：', '');
+        if (meaning && meaning.trim()) {
+          var vocab = Store.getVocab();
+          if (!vocab.some(function (v) { return v.word.toLowerCase() === text.toLowerCase(); })) {
+            vocab.unshift({ word: text, meaning: meaning.trim(), date: todayStr() });
+            Store.setVocab(vocab);
+            toast('已加入生词本：' + text);
+          } else { toast('生词本已有该词'); }
+        }
+      });
+    });
+  }
+
+  // ========== 仪表盘 ==========
+  function renderDashboard() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '学习仪表盘 - 雅思真题库';
+    var prog = Store.getProgress();
+    var wrong = Store.getWrong();
+    var keys = Object.keys(prog);
+    var totalAttempts = 0, bestOverall = 0, sumOverall = 0;
+    var activity = [];
+    keys.forEach(function (k) {
+      var p = prog[k];
+      totalAttempts += p.attempts;
+      if (p.bestOverall > bestOverall) bestOverall = p.bestOverall;
+      sumOverall += p.bestOverall;
+      (p.history || []).forEach(function (h) { activity.push({ key: k, date: h.date, overall: h.overall, l: h.l, r: h.r }); });
+    });
+    var completed = keys.length;
+    var streak = computeStreak();
+    var avgOverall = completed ? (sumOverall / completed).toFixed(1) : '0.0';
+
+    activity.sort(function (a, b) { return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
+    var recent = activity.slice(0, 10);
+
+    var untried = null;
+    for (var i = 0; i < IELTS_DATA.books.length && !untried; i++) {
+      var bk = IELTS_DATA.books[i];
+      for (var j = 0; j < bk.tests.length; j++) {
+        if (!prog[bk.id + '-' + bk.tests[j].id]) { untried = { bookId: bk.id, testId: bk.tests[j].id, title: bk.fullTitle + ' ' + bk.tests[j].title }; break; }
+      }
+    }
+
+    function bookTestName(key) {
+      var parts = key.split('-');
+      var bk = IELTS_DATA.books.find(function (b) { return b.id === parseInt(parts[0], 10); });
+      if (!bk) return key;
+      var tst = bk.tests.find(function (t) { return t.id === parseInt(parts[1], 10); });
+      return bk.fullTitle + ' · ' + (tst ? tst.title : '');
+    }
+
+    var recentHtml = recent.length ? recent.map(function (a) {
+      return '<div class="activity-item"><div class="activity-name">' + bookTestName(a.key) + '</div>' +
+        '<div class="activity-meta">总分 Band ' + a.overall + ' · 听 ' + a.l + ' · 读 ' + a.r + '</div>' +
+        '<div class="activity-date">' + a.date + '</div></div>';
+    }).join('') : '<div class="empty-state small"><p>还没有练习记录，去完成一套模拟考试吧！</p></div>';
+
+    var statCards =
+      '<div class="dash-stats">' +
+      '<div class="dash-stat"><div class="ds-num">' + completed + '</div><div class="ds-label">已完成套数</div></div>' +
+      '<div class="dash-stat"><div class="ds-num">' + totalAttempts + '</div><div class="ds-label">总练习次数</div></div>' +
+      '<div class="dash-stat"><div class="ds-num">' + bestOverall.toFixed(1) + '</div><div class="ds-label">最高总分</div></div>' +
+      '<div class="dash-stat"><div class="ds-num">' + streak + '</div><div class="ds-label">连续打卡(天)</div></div>' +
+      '<div class="dash-stat"><div class="ds-num">' + wrong.length + '</div><div class="ds-label">错题数量</div></div>' +
+      '<div class="dash-stat"><div class="ds-num">' + avgOverall + '</div><div class="ds-label">平均总分</div></div>' +
+      '</div>';
+
+    app.innerHTML =
+      '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>学习仪表盘</span></div>' +
+      '<div class="dash-header"><h1>📊 我的学习仪表盘</h1><p>记录你的练习轨迹与进步</p></div>' +
+      statCards +
+      (untried ? '<div class="dash-suggest"><span>💡 推荐练习：' + untried.title + '</span><button class="btn-primary" data-start-exam data-book="' + untried.bookId + '" data-test="' + untried.testId + '">开始模拟考试 →</button></div>' : '') +
+      '<div class="dash-section"><h2>📅 最近练习</h2><div class="activity-list">' + recentHtml + '</div></div>' +
+      '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+
+    window.scrollTo(0, 0);
+  }
+
+  // ========== 错题本 ==========
+  function renderWrongBook() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '错题本 - 雅思真题库';
+    var wrong = Store.getWrong().slice().reverse();
+
+    function bookTestName(item) {
+      var bk = IELTS_DATA.books.find(function (b) { return b.id === item.bookId; });
+      if (!bk) return '';
+      var tst = bk.tests.find(function (t) { return t.id === item.testId; });
+      return bk.fullTitle + ' · ' + (tst ? tst.title : '');
+    }
+
+    var listHtml = wrong.length ? wrong.map(function (w, idx) {
+      return '<div class="wrong-item" data-wid="' + w.id + '">' +
+        '<div class="wrong-head"><span class="wrong-mod">' + (w.module === 'listening' ? '🎧 听力' : '📖 阅读') + '</span>' +
+        '<span class="wrong-src">' + bookTestName(w) + '</span><span class="wrong-date">' + w.date + '</span></div>' +
+        '<div class="wrong-q">' + escapeHtml(w.question) + '</div>' +
+        '<div class="wrong-answers"><div class="detail-user">你的答案：<span>' + escapeHtml(w.userAnswer) + '</span></div>' +
+        '<div class="detail-correct">正确答案：<span>' + escapeHtml(w.correctAnswer) + '</span></div></div>' +
+        '<div class="wrong-actions">' +
+        '<button class="btn-small btn-redo" data-start-exam data-book="' + w.bookId + '" data-test="' + w.testId + '">🔁 重做此题</button>' +
+        '<button class="btn-small btn-del-wrong" data-wid="' + w.id + '">🗑 移除</button></div></div>';
+    }).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><h2>还没有错题</h2><p>完成模拟考试后，答错的题目会自动收集到这里</p></div>';
+
+    app.innerHTML =
+      '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>错题本</span></div>' +
+      '<div class="dash-header"><h1>❌ 我的错题本</h1><p>共 ' + wrong.length + ' 道错题 · 重做巩固薄弱环节</p></div>' +
+      '<div class="wrong-list">' + listHtml + '</div>' +
+      '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+
+    document.querySelectorAll('.btn-del-wrong').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.getAttribute('data-wid');
+        var arr = Store.getWrong().filter(function (w) { return w.id !== id; });
+        Store.setWrong(arr);
+        renderWrongBook();
+        updateNavCounts();
+      });
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ========== 收藏夹 ==========
+  function renderFavorites() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '收藏夹 - 雅思真题库';
+    var fav = Store.getFav();
+    var cards = '';
+    if (fav.length) {
+      cards = fav.map(function (key) {
+        var parts = key.split('-');
+        var bk = IELTS_DATA.books.find(function (b) { return b.id === parseInt(parts[0], 10); });
+        if (!bk) return '';
+        var tst = bk.tests.find(function (t) { return t.id === parseInt(parts[1], 10); });
+        if (!tst) return '';
+        return '<div class="fav-card">' +
+          '<div class="fav-card-info"><h3>' + bk.fullTitle + ' · ' + tst.title + '</h3>' +
+          '<p>' + bk.desc + '</p></div>' +
+          '<div class="fav-card-actions">' +
+          '<button class="btn-small" data-nav-book="' + bk.id + '">查看试题</button>' +
+          '<button class="btn-small btn-start-exam" data-start-exam data-book="' + bk.id + '" data-test="' + tst.id + '">模拟考试</button>' +
+          '<button class="btn-small btn-del-fav" data-fav="' + key + '">取消收藏</button></div></div>';
+      }).join('');
+    }
+    app.innerHTML =
+      '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>收藏夹</span></div>' +
+      '<div class="dash-header"><h1>⭐ 我的收藏</h1><p>共 ' + fav.length + ' 套收藏真题</p></div>' +
+      (fav.length ? '<div class="fav-list">' + cards + '</div>' : '<div class="empty-state"><div class="empty-icon">⭐</div><h2>还没有收藏</h2><p>在真题卡片上点击「收藏」即可加入</p></div>') +
+      '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+
+    document.querySelectorAll('[data-nav-book]').forEach(function (btn) {
+      btn.addEventListener('click', function () { renderBook(parseInt(this.getAttribute('data-nav-book'), 10)); });
+    });
+    document.querySelectorAll('.btn-del-fav').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = this.getAttribute('data-fav');
+        var arr = Store.getFav().filter(function (k) { return k !== key; });
+        Store.setFav(arr);
+        renderFavorites();
+        updateNavCounts();
+      });
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ========== 生词本 ==========
+  function renderVocab() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '生词本 - 雅思真题库';
+    var vocab = Store.getVocab();
+    var listHtml = vocab.length ? vocab.map(function (v, idx) {
+      return '<div class="vocab-item"><div class="vocab-word">' + escapeHtml(v.word) + '</div>' +
+        '<div class="vocab-meaning">' + escapeHtml(v.meaning) + '</div>' +
+        '<button class="btn-small btn-del-vocab" data-vidx="' + idx + '">🗑</button></div>';
+    }).join('') : '<div class="empty-state"><div class="empty-icon">📝</div><h2>生词本为空</h2><p>在练习模式阅读真题中<b>双击单词</b>即可快速收藏，或在此手动添加</p></div>';
+
+    app.innerHTML =
+      '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词本</span></div>' +
+      '<div class="dash-header"><h1>📝 我的生词本</h1><p>共 ' + vocab.length + ' 个单词</p></div>' +
+      '<div class="vocab-add"><input type="text" id="vocab-word" placeholder="单词 (如: sustainable)">' +
+      '<input type="text" id="vocab-meaning" placeholder="释义">' +
+      '<button class="btn-primary" id="vocab-add-btn">添加</button></div>' +
+      '<div class="vocab-list">' + listHtml + '</div>' +
+      '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+
+    function doAdd() {
+      var w = document.getElementById('vocab-word').value.trim();
+      var m = document.getElementById('vocab-meaning').value.trim();
+      if (!w) { toast('请输入单词'); return; }
+      var arr = Store.getVocab();
+      if (!arr.some(function (v) { return v.word.toLowerCase() === w.toLowerCase(); })) {
+        arr.unshift({ word: w, meaning: m || '（未填释义）', date: todayStr() });
+        Store.setVocab(arr);
+        renderVocab();
+        toast('已添加：' + w);
+      } else { toast('该词已存在'); }
+    }
+    document.getElementById('vocab-add-btn').addEventListener('click', doAdd);
+    document.getElementById('vocab-word').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
+    document.getElementById('vocab-meaning').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
+    document.querySelectorAll('.btn-del-vocab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(this.getAttribute('data-vidx'), 10);
+        var arr = Store.getVocab();
+        arr.splice(i, 1);
+        Store.setVocab(arr);
+        renderVocab();
+      });
+    });
+    window.scrollTo(0, 0);
+  }
+
   // ========== 初始化 ==========
+  applyTheme();
+  bindThemeToggle();
+  bindSearch();
+  registerSW();
+  updateNavCounts();
   renderHome();
 })();
