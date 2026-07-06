@@ -353,7 +353,7 @@
       renderListening(test.listening, bookId, testId) +
       renderReading(test.reading) +
       renderWriting(test.writing) +
-      renderSpeaking(test.speaking) +
+      renderSpeaking(test.speaking, bookId, testId) +
       '</div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav="book" data-book="' + bookId + '">← 返回' + book.fullTitle + '</button></div>';
 
@@ -361,6 +361,7 @@
     bindAnswerToggles();
     bindAudioPlayers(bookId, testId);
     bindVocabSelection();
+    bindSpeakRecorder();
     window.scrollTo(0, 0);
   }
 
@@ -483,7 +484,7 @@
   }
 
   // ========== 练习模式：口语渲染 ==========
-  function renderSpeaking(data) {
+  function renderSpeaking(data, bookId, testId) {
     const partsHtml = data.parts.map(function (part, idx) {
       var content = '';
       if (part.cueCard) {
@@ -505,10 +506,18 @@
         }).join('');
         content = '<div class="questions-list">' + questionsHtml + '</div>';
       }
+      var recKey = bookId + '-' + testId + '-spk' + idx;
       return (
         '<div class="exam-section"><div class="exam-section-header">' +
         '<span class="exam-section-tag tag-speaking">' + part.part + '</span></div>' +
-        (part.intro ? '<p class="exam-section-context">' + part.intro + '</p>' : '') + content + '</div>'
+        (part.intro ? '<p class="exam-section-context">' + part.intro + '</p>' : '') + content +
+        '<div class="speak-recorder" data-rec-key="' + recKey + '">' +
+        '<button class="btn-small btn-rec">🎙 录音作答</button>' +
+        '<button class="btn-small btn-stop-rec" style="display:none;">⏹ 停止</button>' +
+        '<button class="btn-small btn-del-rec" style="display:none;">🗑 删除</button>' +
+        '<span class="rec-status"></span>' +
+        '<div class="rec-playback"></div></div>' +
+        '</div>'
       );
     }).join('');
     return (
@@ -808,8 +817,11 @@
         '<span class="exam-section-type">' + task.type + '</span></div>' +
         '<div class="writing-prompt"><h4>题目要求</h4><p>' + escapeHtml(task.prompt) + '</p></div>' +
         '<div class="exam-writing-area">' +
-        '<div class="writing-toolbar"><span class="word-count-label">字数：<span class="word-count" data-key="' + answerKey + '">0</span> / ' + minWords + '+</span></div>' +
+        (task.tips ? '<div class="writing-tips-inline"><span>💡 ' + escapeHtml(task.tips) + '</span></div>' : '') +
+        '<div class="writing-toolbar"><span class="word-count-label">字数：<span class="word-count" data-key="' + answerKey + '">0</span> / ' + minWords + '+</span>' +
+        '<button class="btn-small btn-writing-check" data-key="' + answerKey + '" data-min="' + minWords + '">✍️ 批改助手</button></div>' +
         '<textarea class="exam-textarea" data-key="' + answerKey + '" placeholder="在此输入你的作文..." rows="12"></textarea>' +
+        '<div class="writing-feedback" data-key="' + answerKey + '" data-hidden="true"></div>' +
         '</div></div>'
       );
     }).join('');
@@ -998,6 +1010,21 @@
         var countEl = document.querySelector('.word-count[data-key="' + this.dataset.key + '"]');
         if (countEl) countEl.textContent = words;
         updateAnswerSheet();
+      });
+    });
+
+    // 写作批改助手
+    document.querySelectorAll('.btn-writing-check').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-key');
+        var min = parseInt(btn.getAttribute('data-min'), 10) || 150;
+        var ta = document.querySelector('.exam-textarea[data-key="' + key + '"]');
+        var fb = document.querySelector('.writing-feedback[data-key="' + key + '"]');
+        if (!ta || !fb) return;
+        fb.innerHTML = analyzeWriting(ta.value, min);
+        fb.setAttribute('data-hidden', 'false');
+        fb.classList.add('answer-visible');
+        fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
     });
 
@@ -1320,7 +1347,8 @@
     app.innerHTML =
       '<div class="exam-results">' +
       '<div class="result-header">' +
-      '<h1>📊 考试成绩报告</h1>' +
+      '<div class="result-header-top"><h1>📊 考试成绩报告</h1>' +
+      '<button class="btn-primary" id="btn-share-card">📤 生成分享卡片</button></div>' +
       '<p>' + book.fullTitle + ' · ' + test.title + ' · 用时 ' + mins + '分' + secs + '秒 · ✅ 已保存</p>' +
       '</div>' +
       scoreCards +
@@ -1343,6 +1371,18 @@
       '</div>';
 
     bindNav();
+
+    var shareBtn = document.getElementById('btn-share-card');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', function () {
+        generateShareCard({
+          bookTitle: book.fullTitle, testTitle: test.title,
+          overall: overallBand, lBand: lBand.toFixed(1), rBand: rBand.toFixed(1),
+          lCorrect: lCorrect, lTotal: lTotal, rCorrect: rCorrect, rTotal: rTotal,
+          streak: computeStreak()
+        });
+      });
+    }
 
     // 结果Tab切换
     document.querySelectorAll('.btn-result-tab').forEach(function (btn) {
@@ -1627,6 +1667,13 @@
         '<div class="activity-date">' + a.date + '</div></div>';
     }).join('') : '<div class="empty-state small"><p>还没有练习记录，去完成一套模拟考试吧！</p></div>';
 
+    var trendHtml = recent.length ? recent.slice(0, 8).reverse().map(function (a) {
+      var pct = Math.max(0, Math.min(100, (parseFloat(a.overall) / 9) * 100));
+      return '<div class="trend-row"><span class="trend-label">' + a.date.slice(5) + '</span>' +
+        '<div class="trend-track"><div class="trend-fill" style="width:' + pct.toFixed(0) + '%"></div></div>' +
+        '<span class="trend-val">' + a.overall + '</span></div>';
+    }).join('') : '';
+
     var statCards =
       '<div class="dash-stats">' +
       '<div class="dash-stat"><div class="ds-num">' + completed + '</div><div class="ds-label">已完成套数</div></div>' +
@@ -1641,6 +1688,7 @@
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>学习仪表盘</span></div>' +
       '<div class="dash-header"><h1>📊 我的学习仪表盘</h1><p>记录你的练习轨迹与进步</p></div>' +
       statCards +
+      (trendHtml ? '<div class="dash-section"><h2>📈 成绩趋势</h2><div class="trend-bars">' + trendHtml + '</div></div>' : '') +
       (untried ? '<div class="dash-suggest"><span>💡 推荐练习：' + untried.title + '</span><button class="btn-primary" data-start-exam data-book="' + untried.bookId + '" data-test="' + untried.testId + '">开始模拟考试 →</button></div>' : '') +
       '<div class="dash-section"><h2>📅 最近练习</h2><div class="activity-list">' + recentHtml + '</div></div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
@@ -1750,7 +1798,8 @@
 
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词本</span></div>' +
-      '<div class="dash-header"><h1>📝 我的生词本</h1><p>共 ' + vocab.length + ' 个单词</p></div>' +
+      '<div class="dash-header dash-header-row"><div><h1>📝 我的生词本</h1><p>共 ' + vocab.length + ' 个单词</p></div>' +
+      (vocab.length ? '<button class="btn-primary" id="btn-vocab-study">🎴 开始背诵</button>' : '') + '</div>' +
       '<div class="vocab-add"><input type="text" id="vocab-word" placeholder="单词 (如: sustainable)">' +
       '<input type="text" id="vocab-meaning" placeholder="释义">' +
       '<button class="btn-primary" id="vocab-add-btn">添加</button></div>' +
@@ -1770,6 +1819,8 @@
       } else { toast('该词已存在'); }
     }
     document.getElementById('vocab-add-btn').addEventListener('click', doAdd);
+    var studyBtn = document.getElementById('btn-vocab-study');
+    if (studyBtn) studyBtn.addEventListener('click', function () { renderVocabStudy(); });
     document.getElementById('vocab-word').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
     document.getElementById('vocab-meaning').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
     document.querySelectorAll('.btn-del-vocab').forEach(function (btn) {
@@ -1782,6 +1833,242 @@
       });
     });
     window.scrollTo(0, 0);
+  }
+
+  // ==========================================
+  // ========== 新功能：写作批改 / 生词背诵 / 分享卡片 / 口语录音 ==========
+  // ==========================================
+
+  // ---------- 写作批改助手（启发式自评，无后端）----------
+  function analyzeWriting(text, minWords) {
+    var raw = (text || '').trim();
+    if (!raw) return '<p class="wf-empty">还没有内容，先动笔写一点吧～</p>';
+    var words = raw.split(/\s+/).filter(function (w) { return w.length > 0; });
+    var wordCount = words.length;
+    var sentences = raw.split(/[.!?。！？]+/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+    var sentenceCount = sentences.length;
+    var avgLen = sentenceCount ? (wordCount / sentenceCount).toFixed(1) : '0';
+    var lower = words.map(function (w) { return w.toLowerCase().replace(/[^a-z']/g, ''); }).filter(function (w) { return w.length > 0; });
+    var uniq = {}; lower.forEach(function (w) { uniq[w] = 1; });
+    var diversity = lower.length ? Math.round((Object.keys(uniq).length / lower.length) * 100) : 0;
+    var connectives = ['however', 'therefore', 'moreover', 'furthermore', 'in addition', 'for example', 'for instance', 'on the other hand', 'in contrast', 'as a result', 'although', 'whereas', 'nevertheless', 'consequently', 'in conclusion', 'to sum up', 'firstly', 'secondly', 'finally', 'besides', 'thus'];
+    var connFound = connectives.filter(function (c) { return raw.toLowerCase().indexOf(c) !== -1; });
+    var issues = [];
+    if (wordCount < minWords) issues.push('字数不足：当前 ' + wordCount + ' 词，建议至少 ' + minWords + ' 词（直接影响 Task Response 得分）。');
+    if (sentenceCount && parseFloat(avgLen) > 28) issues.push('句子偏长（平均 ' + avgLen + ' 词），多用标点拆分，提升可读性。');
+    if (sentenceCount && parseFloat(avgLen) < 8) issues.push('句子偏短（平均 ' + avgLen + ' 词），尝试用从句与连接词合并，增强连贯性。');
+    if (connFound.length < 3) issues.push('连接词偏少（仅 ' + connFound.length + ' 个），建议增加 however / therefore / for example 等，提升 Coherence & Cohesion。');
+    if (diversity < 55) issues.push('词汇重复率偏高（多样性 ' + diversity + '%），可多用同义替换提升 Lexical Resource。');
+    var stats =
+      '<div class="wf-stats">' +
+      '<div class="wf-stat"><span>' + wordCount + '</span><label>字数 / ' + minWords + '+</label></div>' +
+      '<div class="wf-stat"><span>' + sentenceCount + '</span><label>句子数</label></div>' +
+      '<div class="wf-stat"><span>' + avgLen + '</span><label>平均句长</label></div>' +
+      '<div class="wf-stat"><span>' + diversity + '%</span><label>词汇多样性</label></div>' +
+      '</div>';
+    var connHtml = '<div class="wf-conn">已用连接词：' + (connFound.length ? connFound.map(function (c) { return '<span class="conn-chip">' + c + '</span>'; }).join('') : '<span class="wf-muted">暂无</span>') + '</div>';
+    var issuesHtml = issues.length ? '<ul class="wf-issues">' + issues.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>' : '<p class="wf-ok">👍 当前文本在长度与基本结构上较为达标，继续打磨论证与词汇即可。</p>';
+    var checklist =
+      '<div class="wf-checklist"><h5>四项评分标准自检</h5>' +
+      '<div class="wf-crit"><span>Task Response</span><i>' + (wordCount >= minWords ? '字数达标，检查是否充分回应所有要点' : '字数不足，需覆盖全部任务要求') + '</i></div>' +
+      '<div class="wf-crit"><span>Coherence & Cohesion</span><i>' + (connFound.length >= 3 ? '连接词使用良好' : '建议增加连接词与指代衔接') + '</i></div>' +
+      '<div class="wf-crit"><span>Lexical Resource</span><i>' + (diversity >= 55 ? '词汇较丰富' : '建议替换重复词汇') + '</i></div>' +
+      '<div class="wf-crit"><span>Grammatical Range</span><i>建议混用简单句与复合句，注意时态一致</i></div>' +
+      '</div>';
+    return stats + connHtml + '<div class="wf-title">💡 改进建议</div>' + issuesHtml + checklist +
+      '<p class="wf-note">* 本批改为基于字数、句式、连接词与词汇多样性的启发式自评，仅供参考，不替代人工/考官评分。</p>';
+  }
+
+  // ---------- 生词背诵（闪卡 + 简易间隔重复）----------
+  function renderVocabStudy() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    var list = Store.getVocab();
+    if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
+    document.title = '生词背诵 - 雅思真题库';
+    var queue = list.slice().sort(function (a, b) { return (a.level || 0) - (b.level || 0); });
+    var pos = 0, knownCnt = 0;
+    function card() {
+      if (pos >= queue.length) {
+        app.innerHTML =
+          '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词背诵</span></div>' +
+          '<div class="study-done"><div class="study-emoji">🎉</div><h2>本轮背诵完成！</h2>' +
+          '<p>共 ' + queue.length + ' 个单词，其中 ' + knownCnt + ' 个已标记为「认识」</p>' +
+          '<button class="btn-primary" id="study-again">🔁 再来一轮</button> ' +
+          '<button class="btn-back" data-nav-page="vocab">← 返回生词本</button></div>';
+        var again = document.getElementById('study-again');
+        if (again) again.addEventListener('click', function () { pos = 0; knownCnt = 0; card(); });
+        window.scrollTo(0, 0);
+        return;
+      }
+      var v = queue[pos];
+      var total = queue.length;
+      app.innerHTML =
+        '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词背诵</span></div>' +
+        '<div class="study-progress"><div class="study-bar" style="width:' + Math.round((pos / total) * 100) + '%"></div></div>' +
+        '<div class="study-counter">第 ' + (pos + 1) + ' / ' + total + ' 个</div>' +
+        '<div class="flashcard" id="flashcard">' +
+        '<div class="flash-word">' + escapeHtml(v.word) + '</div>' +
+        '<div class="flash-meaning" id="flash-meaning" data-hidden="true">《' + escapeHtml(v.meaning) + '》</div>' +
+        '<button class="btn-small" id="flash-reveal">👁 显示释义</button>' +
+        '</div>' +
+        '<div class="study-actions">' +
+        '<button class="btn-primary study-known" id="study-known">✅ 我认识</button>' +
+        '<button class="btn-secondary study-unknown" id="study-unknown">❌ 还不认识</button>' +
+        '</div>' +
+        '<button class="btn-back" data-nav-page="vocab">← 退出背诵</button>';
+      var reveal = document.getElementById('flash-reveal');
+      var meaning = document.getElementById('flash-meaning');
+      if (reveal) reveal.addEventListener('click', function () {
+        meaning.setAttribute('data-hidden', 'false'); meaning.classList.add('answer-visible');
+        reveal.style.display = 'none';
+      });
+      var kBtn = document.getElementById('study-known');
+      var uBtn = document.getElementById('study-unknown');
+      function next() { pos++; card(); }
+      if (kBtn) kBtn.addEventListener('click', function () { knownCnt++; v.level = Math.min(2, (v.level || 0) + 1); Store.setVocab(list); next(); });
+      if (uBtn) uBtn.addEventListener('click', function () { v.level = 0; Store.setVocab(list); next(); });
+      window.scrollTo(0, 0);
+    }
+    card();
+  }
+
+  // ---------- 分享成绩卡片（Canvas 生成图片）----------
+  function generateShareCard(d) {
+    if (typeof document === 'undefined') return;
+    var W = 1080, H = 1350;
+    var canvas = document.createElement('canvas');
+    if (!canvas || !canvas.getContext) { toast('当前环境不支持生成图片'); return; }
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) { toast('当前环境不支持生成图片'); return; }
+    var g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#1e3a5f'); g.addColorStop(1, '#0d9488');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 0.12; ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(W - 120, 160, 220, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(120, H - 160, 180, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+    ctx.font = 'bold 56px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText('雅思真题库 · 成绩报告', W / 2, 130);
+    ctx.font = '30px "PingFang SC", sans-serif'; ctx.fillStyle = '#cfe9e6';
+    ctx.fillText((d.bookTitle || '') + ' ' + (d.testTitle || ''), W / 2, 180);
+    ctx.beginPath(); ctx.arc(W / 2, 430, 200, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 150px sans-serif';
+    ctx.fillText(String(d.overall), W / 2, 470);
+    ctx.font = '34px "PingFang SC", sans-serif'; ctx.fillStyle = '#cfe9e6';
+    ctx.fillText('预估总分 Band', W / 2, 540);
+    var rows = [
+      ['🎧 听力', 'Band ' + d.lBand, d.lCorrect + '/' + d.lTotal],
+      ['📖 阅读', 'Band ' + d.rBand, d.rCorrect + '/' + d.rTotal],
+      ['🔥 连续打卡', d.streak + ' 天', '']
+    ];
+    var y = 760;
+    rows.forEach(function (r) {
+      ctx.textAlign = 'left'; ctx.fillStyle = '#ffffff'; ctx.font = 'bold 40px "PingFang SC", sans-serif';
+      ctx.fillText(r[0], 140, y);
+      ctx.textAlign = 'right'; ctx.font = 'bold 44px sans-serif';
+      ctx.fillText(r[1], W - 140, y);
+      if (r[2]) { ctx.fillStyle = '#cfe9e6'; ctx.font = '32px sans-serif'; ctx.fillText(r[2], W - 140, y + 44); }
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(140, y + 64); ctx.lineTo(W - 140, y + 64); ctx.stroke();
+      y += 130;
+    });
+    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '30px sans-serif';
+    ctx.fillText('📘 ielts-exam · 开启你的雅思之路', W / 2, H - 70);
+    ctx.fillText(new Date().toLocaleDateString(), W / 2, H - 30);
+
+    var overlay = document.createElement('div'); overlay.className = 'share-overlay';
+    var box = document.createElement('div'); box.className = 'share-box';
+    var img = document.createElement('img'); img.src = canvas.toDataURL('image/png'); img.className = 'share-img';
+    var actions = document.createElement('div'); actions.className = 'share-actions';
+    var dl = document.createElement('button'); dl.className = 'btn-primary'; dl.textContent = '⬇ 下载图片';
+    dl.addEventListener('click', function () {
+      var a = document.createElement('a'); a.href = img.src; a.download = 'ielts-score.png'; a.click();
+    });
+    var sh = document.createElement('button'); sh.className = 'btn-secondary'; sh.textContent = '📤 分享';
+    sh.addEventListener('click', function () {
+      if (navigator.share) {
+        canvas.toBlob(function (b) { if (!b) return; navigator.share({ files: [new File([b], 'ielts-score.png', { type: 'image/png' })], title: '我的雅思成绩' }).catch(function () {}); });
+      } else { toast('当前环境不支持系统分享，请使用下载图片'); }
+    });
+    var close = document.createElement('button'); close.className = 'btn-back'; close.textContent = '关闭';
+    close.addEventListener('click', function () { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); });
+    actions.appendChild(dl); actions.appendChild(sh); actions.appendChild(close);
+    box.appendChild(img); box.appendChild(actions); overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); });
+  }
+
+  // ---------- 口语录音（MediaRecorder + IndexedDB）----------
+  var _idb = null;
+  function idbOpen(cb) {
+    if (typeof window === 'undefined' || !window.indexedDB) { cb(null); return; }
+    if (_idb) { cb(_idb); return; }
+    try {
+      var req = window.indexedDB.open('ielts_rec', 1);
+      req.onupgradeneeded = function (e) { var db = e.target.result; if (!db.objectStoreNames.contains('recordings')) db.createObjectStore('recordings'); };
+      req.onsuccess = function (e) { _idb = e.target.result; cb(_idb); };
+      req.onerror = function () { cb(null); };
+    } catch (e) { cb(null); }
+  }
+  function idbPut(key, blob, cb) {
+    idbOpen(function (db) { if (!db) { if (cb) cb(); return; }
+      try { var tx = db.transaction('recordings', 'readwrite'); tx.objectStore('recordings').put(blob, key); tx.oncomplete = function () { if (cb) cb(); }; } catch (e) { if (cb) cb(); } });
+  }
+  function idbGet(key, cb) {
+    idbOpen(function (db) { if (!db) { cb(null); return; }
+      try { var tx = db.transaction('recordings', 'readonly'); var r = tx.objectStore('recordings').get(key); r.onsuccess = function () { cb(r.result || null); }; r.onerror = function () { cb(null); }; } catch (e) { cb(null); } });
+  }
+  function idbDel(key, cb) {
+    idbOpen(function (db) { if (!db) { if (cb) cb(); return; }
+      try { var tx = db.transaction('recordings', 'readwrite'); tx.objectStore('recordings').delete(key); tx.oncomplete = function () { if (cb) cb(); }; } catch (e) { if (cb) cb(); } });
+  }
+  function bindSpeakRecorder() {
+    document.querySelectorAll('.speak-recorder').forEach(function (el) {
+      if (el.dataset.bound) return;
+      el.dataset.bound = '1';
+      var key = el.getAttribute('data-rec-key');
+      var recBtn = el.querySelector('.btn-rec');
+      var stopBtn = el.querySelector('.btn-stop-rec');
+      var delBtn = el.querySelector('.btn-del-rec');
+      var playArea = el.querySelector('.rec-playback');
+      var status = el.querySelector('.rec-status');
+      var mediaRecorder = null, chunks = [], stream = null;
+      function setStatus(s) { if (status) status.textContent = s; }
+      function showPlayback(blob) {
+        if (!playArea) return;
+        var url = URL.createObjectURL(blob);
+        playArea.innerHTML = '<audio controls src="' + url + '"></audio>';
+        if (delBtn) delBtn.style.display = '';
+      }
+      idbGet(key, function (blob) { if (blob) showPlayback(blob); });
+      if (recBtn) recBtn.addEventListener('click', function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('当前浏览器不支持录音'); return; }
+        recBtn.disabled = true;
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+          stream = s; chunks = [];
+          mediaRecorder = new MediaRecorder(s);
+          mediaRecorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+          mediaRecorder.onstop = function () {
+            var blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+            idbPut(key, blob, function () { showPlayback(blob); });
+            if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+            setStatus('✅ 录音已保存'); recBtn.disabled = false; if (stopBtn) stopBtn.style.display = 'none';
+          };
+          mediaRecorder.start();
+          setStatus('● 录音中…'); if (stopBtn) stopBtn.style.display = '';
+        }).catch(function () {
+          recBtn.disabled = false;
+          setStatus('无法访问麦克风'); toast('麦克风权限被拒绝，请在浏览器设置中允许麦克风');
+        });
+      });
+      if (stopBtn) stopBtn.addEventListener('click', function () { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); });
+      if (delBtn) delBtn.addEventListener('click', function () { idbDel(key, function () { if (playArea) playArea.innerHTML = ''; delBtn.style.display = 'none'; setStatus('已删除录音'); }); });
+    });
   }
 
   // ========== 初始化 ==========
