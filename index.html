@@ -4,18 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雅思真题库 - 历年雅思官方真题与答案</title>
-  <meta name="description" content="收录历年剑桥雅思官方真题，包含听力、阅读、写作、口语四部分完整题目与参考答案">
+  <meta name="description" content="收录历年剑桥雅思官方真题，包含听力、阅读、写作、口语四部分完整题目与参考答案，支持模拟考试、错题本与学习进度保存">
+  <meta name="theme-color" content="#1e3a5f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="雅思真题库">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <nav class="topbar">
     <div class="topbar-inner">
-      <a href="#" class="logo" onclick="location.reload(); return false;">
+      <a href="#" class="logo" data-nav-page="home">
         <span class="logo-icon">📘</span>
         <span class="logo-text">雅思真题库</span>
       </a>
+      <div class="topbar-search">
+        <input type="search" id="global-search" placeholder="搜索真题系列（如 剑19）…" aria-label="搜索">
+      </div>
       <div class="topbar-links">
-        <span class="topbar-tag">IELTS Practice</span>
+        <a href="#" class="nav-link" data-nav-page="dashboard">📊 仪表盘</a>
+        <a href="#" class="nav-link" data-nav-page="wrong">❌ 错题本<span class="nav-count" id="wrong-count"></span></a>
+        <a href="#" class="nav-link" data-nav-page="fav">⭐ 收藏<span class="nav-count" id="fav-count"></span></a>
+        <a href="#" class="nav-link" data-nav-page="vocab">📝 生词本</a>
+        <button class="theme-toggle" id="theme-toggle" title="切换深色/浅色模式">🌙</button>
       </div>
     </div>
   </nav>
@@ -26,11 +38,20 @@
 
   <script src="js/data.js"></script>
   <script src="js/data-extra.js"></script>
+  <script src="js/data-extra2-1.js"></script>
+  <script src="js/data-extra2-2.js"></script>
+  <script src="js/data-extra2-3.js"></script>
   <script src="js/listening-scripts.js"></script>
   <script src="js/listening-scripts-extra.js"></script>
+  <script src="js/listening-scripts-extra2-1.js"></script>
+  <script src="js/listening-scripts-extra2-2.js"></script>
+  <script src="js/listening-scripts-extra2-3.js"></script>
   <script src="js/reading-passages-1.js"></script>
   <script src="js/reading-passages-2.js"></script>
   <script src="js/reading-passages-3.js"></script>
+  <script src="js/reading-passages-extra2-1.js"></script>
+  <script src="js/reading-passages-extra2-2.js"></script>
+  <script src="js/reading-passages-extra2-3.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
