@@ -1543,6 +1543,7 @@
     else if (page === 'vocab') renderVocab();
     else if (page === 'speaking') renderSpeakingBank();
     else if (page === 'writing-tpl') renderWritingTemplates();
+    else if (page === 'writing-samples') renderWritingSamples();
     else if (page === 'vocab-test') renderVocabTest();
     else if (page === 'community') renderCommunity();
     else if (page === 'quick') renderQuickPractice();
@@ -1707,6 +1708,7 @@
     var toolsHtml = '<div class="dash-section"><h2>🧰 学习工具</h2><div class="tools-grid">' +
       '<div class="tool-card" data-nav-page="speaking"><div class="tool-icon">🗣️</div><h3>口语话题库</h3></div>' +
       '<div class="tool-card" data-nav-page="writing-tpl"><div class="tool-icon">✍️</div><h3>写作模板库</h3></div>' +
+      '<div class="tool-card" data-nav-page="writing-samples"><div class="tool-icon">📚</div><h3>写作范文库</h3></div>' +
       '<div class="tool-card" data-nav-page="quick"><div class="tool-icon">⚡</div><h3>快速练习</h3></div>' +
       '<div class="tool-card" data-nav-page="community"><div class="tool-icon">🌐</div><h3>学习社区</h3></div>' +
       '<div class="tool-card" data-nav-page="vocab-test"><div class="tool-icon">📝</div><h3>单词测试</h3></div>' +
@@ -2194,7 +2196,7 @@
   }
 
   // ---------- 口语话题库 ----------
-  var sbCat = 0, sbTopic = null;
+  var sbCat = 0, sbTopic = null, sbP2Ver = 0;
   function renderSpeakingBank() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
@@ -2213,13 +2215,23 @@
         '<div class="dash-header"><h1>🗣️ 雅思口语话题库</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，含 Part1/2/3 范文与技巧</p></div>' +
         tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
       bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
-      bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); renderSpeakingBank(); });
+      bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); sbP2Ver = 0; renderSpeakingBank(); });
     } else {
       var t = bank[sbCat].topics[sbTopic];
       var p1 = t.part1.map(function (x) {
         return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
       }).join('');
-      var p2 = '<div class="qa-block"><div class="qa-cue">' + escapeHtml(t.part2.cueCard).replace(/\n/g, '<br>') + '</div><div class="qa-a">' + escapeHtml(t.part2.modelAnswer).replace(/\n/g, '<br>') + spk(t.part2.modelAnswer) + '</div><div class="qa-tips">💡 ' + escapeHtml(t.part2.tips) + '</div></div>';
+      var p2Versions = t.part2.modelAnswers || [t.part2.modelAnswer];
+      if (sbP2Ver >= p2Versions.length) sbP2Ver = 0;
+      var p2VerTabs = p2Versions.length > 1
+        ? '<div class="ver-tabs">' + p2Versions.map(function (va, i) {
+            return '<button class="ver-tab' + (i === sbP2Ver ? ' active' : '') + '" data-p2-ver="' + i + '">范文 ' + (i + 1) + '</button>';
+          }).join('') + '</div>'
+        : '';
+      var p2cur = p2Versions[sbP2Ver] || p2Versions[0];
+      var p2 = '<div class="qa-block"><div class="qa-cue">' + escapeHtml(t.part2.cueCard).replace(/\n/g, '<br>') + '</div>' + p2VerTabs +
+        '<div class="qa-a" id="p2-answer">' + escapeHtml(p2cur).replace(/\n/g, '<br>') + spk(p2cur) + '</div>' +
+        '<div class="qa-tips">💡 ' + escapeHtml(t.part2.tips) + '</div></div>';
       var p3 = t.part3.map(function (x) {
         return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
       }).join('');
@@ -2229,6 +2241,14 @@
         '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
       var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
       var b2 = document.getElementById('sb-back2'); if (b2) b2.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
+      bindClick('[data-p2-ver]', function (el) {
+        var i = parseInt(el.getAttribute('data-p2-ver'), 10);
+        sbP2Ver = i;
+        document.querySelectorAll('[data-p2-ver]').forEach(function (b) { b.classList.toggle('active', parseInt(b.getAttribute('data-p2-ver'), 10) === i); });
+        var ans = p2Versions[i] || p2Versions[0];
+        var a = document.getElementById('p2-answer');
+        if (a) a.innerHTML = escapeHtml(ans).replace(/\n/g, '<br>') + spk(ans);
+      });
     }
     window.scrollTo(0, 0);
   }
@@ -2279,14 +2299,65 @@
     window.scrollTo(0, 0);
   }
 
+  // ---------- 写作范文库（按分数段） ----------
+  var wsType = 'task2', wsBand = 0, wsIdx = null;
+  function renderWritingSamples() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '写作范文库 - 雅思真题库';
+    var data = (typeof WRITING_SAMPLES !== 'undefined') ? WRITING_SAMPLES : { task1: [], task2: [] };
+    if (wsIdx === null) {
+      var typeTabs = '<div class="cat-tabs"><button class="cat-tab' + (wsType === 'task1' ? ' active' : '') + '" data-ws-type="task1">Task 1 图表类</button><button class="cat-tab' + (wsType === 'task2' ? ' active' : '') + '" data-ws-type="task2">Task 2 议论文</button></div>';
+      var bandTabs = '<div class="cat-tabs"><button class="cat-tab' + (wsBand === 0 ? ' active' : '') + '" data-ws-band="0">全部</button><button class="cat-tab' + (wsBand === 6 ? ' active' : '') + '" data-ws-band="6">Band 6</button><button class="cat-tab' + (wsBand === 7 ? ' active' : '') + '" data-ws-band="7">Band 7</button><button class="cat-tab' + (wsBand === 8 ? ' active' : '') + '" data-ws-band="8">Band 8</button></div>';
+      var all = (wsType === 'task1' ? data.task1 : data.task2);
+      var list = all.filter(function (x) { return wsBand === 0 || x.band === wsBand; });
+      if (!list.length) {
+        app.innerHTML = breadcrumb('写作范文库') + typeTabs + bandTabs + '<div class="empty-state"><div class="empty-icon">📚</div><p>该分类暂无范文</p></div>' + backHome();
+      } else {
+        var cards = list.map(function (x, i) {
+          var preview = x.prompt.length > 60 ? x.prompt.slice(0, 60) + '…' : x.prompt;
+          return '<div class="topic-card" data-ws-idx="' + i + '"><div class="topic-icon">📄</div><span class="band-badge band-' + x.band + '">Band ' + x.band + '</span><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(preview) + '</p><span class="topic-go">查看范文 →</span></div>';
+        }).join('');
+        app.innerHTML = breadcrumb('写作范文库') +
+          '<div class="dash-header"><h1>📚 雅思写作范文库</h1><p>按分数段展示 Task1 / Task2 范文，对比不同 Band 的写作差异</p></div>' +
+          typeTabs + bandTabs + '<div class="topic-grid">' + cards + '</div>' + backHome();
+      }
+      bindClick('[data-ws-type]', function (el) { wsType = el.getAttribute('data-ws-type'); wsIdx = null; renderWritingSamples(); });
+      bindClick('[data-ws-band]', function (el) { wsBand = parseInt(el.getAttribute('data-ws-band'), 10); wsIdx = null; renderWritingSamples(); });
+      bindClick('[data-ws-idx]', function (el) { wsIdx = parseInt(el.getAttribute('data-ws-idx'), 10); renderWritingSamples(); });
+    } else {
+      var all2 = (wsType === 'task1' ? data.task1 : data.task2);
+      var filtered2 = all2.filter(function (x) { return wsBand === 0 || x.band === wsBand; });
+      var x = filtered2[wsIdx];
+      if (!x) { wsIdx = null; renderWritingSamples(); return; }
+      var sampleHtml = x.sample.split('\n').map(function (line) { return '<p>' + escapeHtml(line) + '</p>'; }).join('');
+      app.innerHTML = breadcrumb('写作范文库') +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span></h1><p>写作范文 · 分数段参考</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
+        '<div class="wt-detail">' +
+        '<div class="wf-title">📋 题目</div><div class="qa-block">' + escapeHtml(x.prompt).replace(/\n/g, '<br>') + '</div>' +
+        '<div class="wf-title">✍️ 范文</div><div class="model-answer">' + sampleHtml + '</div>' +
+        '<div class="wf-title">🔍 范文简析</div><div class="qa-block">' + escapeHtml(x.analysis) + '</div>' +
+        '</div>' +
+        '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="ws-back2">← 返回范文列表</button></div>';
+      var b1 = document.getElementById('ws-back'); if (b1) b1.addEventListener('click', function () { wsIdx = null; renderWritingSamples(); });
+      var b2 = document.getElementById('ws-back2'); if (b2) b2.addEventListener('click', function () { wsIdx = null; renderWritingSamples(); });
+    }
+    window.scrollTo(0, 0);
+  }
+
   // ---------- 单词测试模式 ----------
-  var vtQueue = [], vtPos = 0, vtCorrect = 0;
+  var vtQueue = [], vtPos = 0, vtCorrect = 0, vtMode = 'choice';
   function renderVocabTest() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
     var list = Store.getVocab();
     if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
     document.title = '单词测试 - 雅思真题库';
+    startVocabTest();
+  }
+  function startVocabTest() {
+    var list = Store.getVocab();
+    if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
     var shuffled = list.slice().sort(function () { return Math.random() - 0.5; });
     var total = Math.min(shuffled.length, 10);
     vtQueue = shuffled.slice(0, total); vtPos = 0; vtCorrect = 0;
@@ -2295,37 +2366,69 @@
   function questionVocab() {
     if (vtPos >= vtQueue.length) { showVocabResult(); return; }
     var v = vtQueue[vtPos];
-    var pool = Store.getVocab().filter(function (x) { return x.word !== v.word; });
-    var opts = [v.word];
-    while (opts.length < 4 && pool.length) {
-      var r = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      if (opts.indexOf(r.word) === -1) opts.push(r.word);
-    }
-    opts.sort(function () { return Math.random() - 0.5; });
-    app.innerHTML = breadcrumb('单词测试') +
+    var modeTabs = '<div class="cat-tabs"><button class="cat-tab' + (vtMode === 'choice' ? ' active' : '') + '" data-vt-mode="choice">📝 选择题</button><button class="cat-tab' + (vtMode === 'spell' ? ' active' : '') + '" data-vt-mode="spell">⌨️ 拼写题</button></div>';
+    var base =
+      breadcrumb('单词测试') +
       '<div class="study-progress"><div class="study-bar" style="width:' + Math.round((vtPos / vtQueue.length) * 100) + '%"></div></div>' +
-      '<div class="study-counter">第 ' + (vtPos + 1) + ' / ' + vtQueue.length + ' 题</div>' +
-      '<div class="flashcard"><div class="flash-word" style="font-size:28px;">《' + escapeHtml(v.meaning) + '》</div>' +
-      '<div class="vocab-q">请选出正确的英文单词：</div>' +
-      '<div class="vt-opts">' + opts.map(function (o) { return '<button class="vt-opt" data-word="' + escapeHtml(o) + '">' + escapeHtml(o) + '</button>'; }).join('') + '</div></div>' +
-      '<div style="text-align:center;"><button class="btn-back" data-nav-page="vocab">退出测试</button></div>';
-    bindClick('.vt-opt', function (el) {
-      var pick = el.getAttribute('data-word');
-      var correct = pick === v.word;
-      if (correct) vtCorrect++;
-      el.classList.add(correct ? 'vt-correct' : 'vt-wrong');
-      document.querySelectorAll('.vt-opt').forEach(function (b) { b.disabled = true; if (b.getAttribute('data-word') === v.word) b.classList.add('vt-correct'); });
-      var note = document.createElement('div');
-      note.className = 'vt-note ' + (correct ? 'wf-ok' : 'wf-muted');
-      note.innerHTML = (correct ? '✅ 答对了！' : '❌ 正确答案：<b>' + escapeHtml(v.word) + '</b>');
-      var card = document.querySelector('.flashcard'); if (card) card.appendChild(note);
-      setTimeout(function () { vtPos++; questionVocab(); }, 1100);
-    });
+      '<div class="study-counter">第 ' + (vtPos + 1) + ' / ' + vtQueue.length + ' 题</div>' + modeTabs;
+    if (vtMode === 'spell') {
+      app.innerHTML = base +
+        '<div class="flashcard"><div class="flash-word" style="font-size:28px;">《' + escapeHtml(v.meaning) + '》</div>' +
+        '<div class="vocab-q">请拼写正确的英文单词：</div>' +
+        '<input class="qp-input" id="vt-spell" placeholder="输入英文单词…" autocomplete="off" autocapitalize="off" spellcheck="false">' +
+        '<div style="margin-top:10px;"><button class="btn-primary" id="vt-submit">提交</button></div></div>' +
+        '<div style="text-align:center;"><button class="btn-back" data-nav-page="vocab">退出测试</button></div>';
+      var input = document.getElementById('vt-spell');
+      var submitBtn = document.getElementById('vt-submit');
+      if (input) input.focus();
+      function checkSpelling() {
+        if (document.querySelector('.vt-note')) return;
+        var val = (input.value || '').trim().toLowerCase();
+        var ans = (v.word || '').trim().toLowerCase();
+        var correct = val === ans;
+        if (correct) vtCorrect++;
+        var note = document.createElement('div');
+        note.className = 'vt-note ' + (correct ? 'wf-ok' : 'wf-muted');
+        note.innerHTML = correct ? '✅ 拼写正确！' : '❌ 正确答案：<b>' + escapeHtml(v.word) + '</b>';
+        var card = document.querySelector('.flashcard'); if (card) card.appendChild(note);
+        if (input) input.disabled = true;
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '下一题 →'; submitBtn.onclick = function () { vtPos++; questionVocab(); }; }
+        setTimeout(function () { if (!(document.querySelector('.vt-note button'))) { vtPos++; questionVocab(); } }, 1500);
+      }
+      if (submitBtn) submitBtn.addEventListener('click', checkSpelling);
+      if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); checkSpelling(); } });
+    } else {
+      var pool = Store.getVocab().filter(function (x) { return x.word !== v.word; });
+      var opts = [v.word];
+      while (opts.length < 4 && pool.length) {
+        var r = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        if (opts.indexOf(r.word) === -1) opts.push(r.word);
+      }
+      opts.sort(function () { return Math.random() - 0.5; });
+      app.innerHTML = base +
+        '<div class="flashcard"><div class="flash-word" style="font-size:28px;">《' + escapeHtml(v.meaning) + '》</div>' +
+        '<div class="vocab-q">请选出正确的英文单词：</div>' +
+        '<div class="vt-opts">' + opts.map(function (o) { return '<button class="vt-opt" data-word="' + escapeHtml(o) + '">' + escapeHtml(o) + '</button>'; }).join('') + '</div></div>' +
+        '<div style="text-align:center;"><button class="btn-back" data-nav-page="vocab">退出测试</button></div>';
+      bindClick('.vt-opt', function (el) {
+        var pick = el.getAttribute('data-word');
+        var correct = pick === v.word;
+        if (correct) vtCorrect++;
+        el.classList.add(correct ? 'vt-correct' : 'vt-wrong');
+        document.querySelectorAll('.vt-opt').forEach(function (b) { b.disabled = true; if (b.getAttribute('data-word') === v.word) b.classList.add('vt-correct'); });
+        var note = document.createElement('div');
+        note.className = 'vt-note ' + (correct ? 'wf-ok' : 'wf-muted');
+        note.innerHTML = (correct ? '✅ 答对了！' : '❌ 正确答案：<b>' + escapeHtml(v.word) + '</b>');
+        var card = document.querySelector('.flashcard'); if (card) card.appendChild(note);
+        setTimeout(function () { vtPos++; questionVocab(); }, 1100);
+      });
+    }
+    bindClick('[data-vt-mode]', function (el) { vtMode = el.getAttribute('data-vt-mode'); startVocabTest(); });
     window.scrollTo(0, 0);
   }
   function showVocabResult() {
     app.innerHTML = breadcrumb('单词测试') +
-      '<div class="study-done"><div class="study-emoji">📝</div><h2>测试结果</h2><p>答对 ' + vtCorrect + ' / ' + vtQueue.length + ' 题（' + (vtCorrect / vtQueue.length * 100).toFixed(0) + '%）</p>' +
+      '<div class="study-done"><div class="study-emoji">📝</div><h2>测试结果</h2><p>' + (vtMode === 'spell' ? '拼写' : '选择') + '模式 · 答对 ' + vtCorrect + ' / ' + vtQueue.length + ' 题（' + (vtCorrect / vtQueue.length * 100).toFixed(0) + '%）</p>' +
       '<button class="btn-primary" id="vt-again">🔁 再来一组</button> <button class="btn-back" data-nav-page="vocab">返回生词本</button></div>';
     var a = document.getElementById('vt-again'); if (a) a.addEventListener('click', function () { renderVocabTest(); });
     window.scrollTo(0, 0);
