@@ -2654,3 +2654,19 @@ body {
   .bn-icon { font-size: 18px; }
   .vt-opts { grid-template-columns: 1fr; }
 }
+
+/* ========== 口语 Part2 多版本切换 ========== */
+.ver-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.ver-tab { background: var(--color-card); border: 1px solid var(--color-border); color: var(--color-text-light); border-radius: 14px; padding: 5px 12px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.ver-tab.active, .ver-tab:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+/* ========== 写作范文分数段徽章 ========== */
+.band-badge { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 10px; padding: 2px 9px; margin-right: 6px; vertical-align: middle; }
+.band-badge.band-6 { background: rgba(245,158,11,0.16); color: #b45309; }
+.band-badge.band-7 { background: rgba(13,148,136,0.16); color: #0d9488; }
+.band-badge.band-8 { background: rgba(37,99,235,0.16); color: #2563eb; }
+[data-theme="dark"] .band-badge.band-6 { color: #fbbf24; }
+[data-theme="dark"] .band-badge.band-7 { color: #2dd4bf; }
+[data-theme="dark"] .band-badge.band-8 { color: #93c5fd; }
+.wt-detail .qa-block { color: var(--color-text-light); line-height: 1.6; }
+.model-answer p { margin: 0 0 10px; line-height: 1.8; color: var(--color-text); }
