@@ -1826,6 +1826,21 @@
   }
 
   // ========== 生词自动释义（英文 dictionaryapi.dev + 中文 MyMemory，均免 key 且支持跨域）==========
+  // 本地雅思词典优先查词（同源加载，国内可访问、秒出）；未命中再走国外接口兜底
+  function lookupLocal(rawWord) {
+    if (typeof IELTS_DICT === 'undefined' || !IELTS_DICT) return null;
+    var w = (rawWord || '').trim().toLowerCase();
+    if (IELTS_DICT[w]) return IELTS_DICT[w];
+    // 简单词形还原：复数 / 过去式 / 进行时
+    var forms = [];
+    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) forms.push(w.slice(0, -1));
+    else if (w.endsWith('es')) forms.push(w.slice(0, -2));
+    else if (w.endsWith('ed')) { forms.push(w.slice(0, -2)); forms.push(w.slice(0, -1)); }
+    else if (w.endsWith('ing')) { forms.push(w.slice(0, -3)); forms.push(w.slice(0, -3) + 'e'); if (w.length > 5) forms.push(w.slice(0, -4)); }
+    for (var i = 0; i < forms.length; i++) { if (IELTS_DICT[forms[i]]) return IELTS_DICT[forms[i]]; }
+    return null;
+  }
+
   function fetchWordInfo(rawWord) {
     return new Promise(function (resolve) {
       var word = (rawWord || '').trim();
@@ -1833,6 +1848,17 @@
       var settled = false;
       function finish() { if (settled) return; settled = true; resolve(out); }
       if (!word) { finish(); return; }
+      // 1) 本地词典命中 -> 立即返回（无需联网）
+      var local = lookupLocal(word);
+      if (local) {
+        out.phonetic = local.phonetic || '';
+        out.enDef = local.en || '';
+        out.example = local.example || '';
+        out.cn = local.cn || '';
+        out.ok = !!(out.cn || out.enDef);
+        finish();
+        return;
+      }
       var enUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word.toLowerCase());
       var cnUrl = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en%7Czh-CN';
       var done = 0, total = 2;
