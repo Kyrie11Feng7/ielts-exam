@@ -14,6 +14,14 @@
  *   - 写作 modelAnswer 与口语 a:'参考回答: ...' 均为「学习用示例文本」，非官方范文/标准回答。
  *   - 阅读 Passage 3（Test 2 公司匹配 32–37）答案已据原文逐条复核。
  *
+ * 复核与修订（2026-07-07）：
+ *   - 已用 laokaoya（剑13T1: 38335/38452/38497，T2: 38570/38603/38633）与 engnovate
+ *     Cambridge IELTS 13 Academic Reading Test 1 & 2 交叉核对三篇阅读官方标题。
+ *   - 修正 Test 1 Passage 3 标题笔误：原 "Artificial artists?"（复数）→ 官方正确标题
+ *     "Artificial artist?"（单数，剑桥原版及 engnovate 均作单数）。
+ *   - 已逐篇核对阅读全文，确认六篇文本（Tourism New Zealand / 无聊 / Artificial artist /
+ *     cinnamon / oxytocin / trends）均为剑桥13真实原文，未跨书错配。
+ *
  * 本文件须放在所有数据文件之后、app.js 之前加载。
  */
 (function () {
@@ -228,7 +236,7 @@
           ]
         },
         {
-          title: 'Passage 3: Artificial artists?',
+          title: 'Passage 3: Artificial artist?',
           difficulty: '难',
           summary: '计算机能否创造艺术？以 Painting Fool、Aaron、EMI 等为例，探讨机器创造力与人类偏见的争议。',
           questions: [
