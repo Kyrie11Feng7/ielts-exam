@@ -2431,9 +2431,22 @@ body {
   border-radius: var(--radius-sm);
   padding: 12px 16px;
 }
-.vocab-word { font-weight: 700; color: var(--color-accent); min-width: 90px; }
-.vocab-meaning { flex: 1; color: var(--color-text); font-size: 14px; }
-.btn-del-vocab { padding: 4px 8px; }
+.vocab-main { flex: 1; min-width: 0; }
+.vocab-word { font-weight: 700; color: var(--color-accent); min-width: 0; word-break: break-word; }
+.vocab-ph { font-weight: 400; color: var(--color-text-light); font-size: 13px; margin-left: 4px; }
+.vocab-cn { color: var(--color-text); font-size: 14px; margin-top: 3px; line-height: 1.4; }
+.vocab-en { color: var(--color-text-light); font-size: 13px; margin-top: 4px; line-height: 1.5; }
+.vocab-tag, .flash-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #0d9488; background: rgba(13,148,136,0.12); border-radius: 4px; padding: 1px 5px; margin-right: 4px; }
+.vocab-ex { color: var(--color-text-light); font-size: 12px; font-style: italic; margin-top: 3px; opacity: 0.85; }
+.vocab-muted { color: var(--color-text-light); opacity: 0.7; }
+.vocab-loading { color: var(--color-accent); }
+.vocab-tip { background: rgba(13,148,136,0.08); border-left: 3px solid var(--color-accent); color: var(--color-text-light); font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; }
+.vocab-tip b { color: var(--color-accent); }
+.flash-ph { font-weight: 400; color: var(--color-text-light); font-size: 15px; }
+.flash-cn { font-size: 20px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; line-height: 1.4; }
+.flash-en { font-size: 15px; color: var(--color-text-light); line-height: 1.5; margin-bottom: 6px; }
+.flash-ex { font-size: 14px; color: var(--color-text-light); font-style: italic; opacity: 0.85; }
+.btn-del-vocab { padding: 4px 8px; flex-shrink: 0; }
 
 /* ========== 提示 Toast ========== */
 .toast {
