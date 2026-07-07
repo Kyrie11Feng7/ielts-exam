@@ -4,10 +4,13 @@
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — laokaoya (剑桥雅思16 Test1/Test2 Part1-4)、ielts-hub、ieltsxpress (transcript)
  *   阅读原文/题目/答案 — engnovate (Cambridge IELTS 16 Academic Reading Test 1 & Test 2 全文)、ielts-hub、ieltsextremes
- *   写作题目 — blog.scitudy.com / ieltswriting.org (Cambridge IELTS 16 Writing Tests 1-4)
+ *   写作题目 — engnovate / ieltswriting.org (Cambridge IELTS 16 Academic Writing Test 1 & Test 2 原题)
  *   口语话题 — ieltspractices.com、babarenglish.com、ieltszone.org (Cambridge 16 IELTS Speaking Test 1/2)
  * 注意：原文/题目为真实剑桥雅思16考题内容；范文与口语"参考回答"为学习用示例文本（非官方范文）。
- *   口语来源存在差异（不同站点对 Test 1/Test 2 的话题标注不一致），已按多数一致版本整合（见末段说明）。
+ * 校订记录：经与权威来源逐题核对，原补丁的写作模块存在跨题错配（T1T2 误用 driverless、
+ *   T2T1 误用 airport、T2T2 误用 local-history），已替换为剑桥16真实写作题目
+ *   （T1T2=居住房屋历史；T2T1=甘蔗制糖流程图；T2T2=广告强调"新"产品）。
+ *   阅读/听力/口语经核对均为剑桥16真实内容，保持原样。
  * 本文件须放在所有数据文件之后、app.js 之前加载。
  */
 (function () {
@@ -230,16 +233,16 @@ In summary, although households acquired far more technology between 1920 and 20
       },
       {
         task: 'Task 2 (大作文)',
-        type: '议论文（利弊讨论）',
-        prompt: 'In the future all cars, buses and trucks will be driverless. The only people travelling inside these vehicles will be passengers.\n\nDo you think the advantages of driverless vehicles outweigh the disadvantages?\n\nWrite at least 250 words.',
-        modelAnswer: `It is predicted that in the future every road vehicle will drive itself, carrying only passengers rather than a human driver. In my view, the benefits of this development clearly outweigh the drawbacks.
+        type: '议论文（原因 + 方法）',
+        prompt: 'In some countries, more and more people are becoming interested in finding out about the history of the house or building they live in.\n\nWhat are the reasons for this?\n\nHow can people research this?\n\nWrite at least 250 words.',
+        modelAnswer: `In many parts of the world today, a growing number of people want to know the story behind the house or building they live in. This essay will look at why this is happening and how such research can be carried out.
 
-The main advantage is safety. Most traffic accidents today are caused by human error, such as tiredness, distraction or poor judgement. Driverless vehicles, guided by sensors and software, should in theory eliminate many of these mistakes and save lives. A further benefit is efficiency: autonomous cars can be coordinated to reduce congestion and fuel use, and people who cannot drive - the elderly, the young or the disabled - gain independence.
+One important reason is a search for identity and a sense of belonging. As societies become more mobile, many individuals feel disconnected from their surroundings, and discovering who lived in their home before them, or how their street developed, helps them feel rooted in a community. A second reason is simple curiosity about the past: old buildings often have unusual features, and people wonder when they were built and what has changed around them. Easier access to information also plays a role; online archives and genealogy websites make this kind of enquiry far more convenient than it once was.
 
-However, there are disadvantages. The technology may fail in bad weather or unusual situations, and a serious system error could have deadly consequences. There is also the economic impact on professional drivers, who could lose their jobs. Moreover, some people simply enjoy driving and would regret its disappearance.
+To research the history of a home, residents can begin with official records held by the local council or land registry, such as title deeds and planning documents. Public libraries and local archives usually keep old maps, photographs and newspaper collections that show how an area looked in earlier decades. Speaking to long-term neighbours or elderly relatives is another valuable method, since oral history preserves details that were never written down. Finally, national heritage organisations and local history groups often have specialist knowledge about particular streets or building styles.
 
-Nevertheless, I believe these concerns can be managed through strict regulation, backup safety systems and retraining programmes. Since the potential to prevent millions of accidents is so great, the advantages of driverless vehicles prevail.`,
-        tips: '明确立场（ outweigh / not outweigh）；各写一段利弊并举例；结尾重申观点；至少250词'
+In conclusion, curiosity about our homes grows from a need for connection with the past and is now easier to satisfy, through records, archives, conversations with others and heritage groups.`,
+        tips: '两段分别回答 why（归属感/好奇/信息易得）与 how（地契/档案/图书馆/邻里口述/遗产机构）；每点举例；至少250词'
       }
     ];
 
@@ -674,31 +677,29 @@ We might associate wisdom with intelligence or particular personality traits, bu
     test2.writing.tasks = [
       {
         task: 'Task 1 (小作文)',
-        type: '地图/平面图对比（现在 vs 改建后）',
-        prompt: 'The plans below show the site of an airport now and how it will look after redevelopment next year.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.',
-        modelAnswer: `The plans illustrate the current layout of an airport and the changes that will be made to the site after its redevelopment next year.
+        type: '流程图描述（制糖工艺）',
+        prompt: 'The diagram below shows the manufacturing process for making sugar from sugar cane.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.',
+        modelAnswer: `The diagram illustrates the process by which sugar is manufactured from sugar cane. Overall, the production involves several stages, from growing and harvesting the cane to crushing, purifying, evaporating and finally drying the sugar.
 
-At present, the airport has a single entrance road leading to the main terminal, with eight departure gates arranged in a row and a single runway to the south. There is a limited check-in area and only a small coffee shop near the entrance.
+First, sugar cane is grown on farms and, once mature, is harvested, typically by hand or machine. The harvested cane is then transported to a factory, where it is crushed in order to extract the juice. This juice passes through a limestone filter, which removes impurities and purifies it.
 
-After redevelopment, the most noticeable change is the expansion of the terminal. The number of departure gates will increase from eight to eighteen, and a new pier will extend towards the east. A second, larger runway will be added to the north, and the entrance road will be widened with a new car park on the west side.
+After purification, the clean juice is heated in an evaporator so that excess water is removed and the liquid becomes more concentrated. The concentrated juice then enters a centrifuge, which separates the sugar crystals from the remaining syrup. The sugar crystals are collected and finally dried and cooled, producing the finished sugar that is ready for packaging and sale.
 
-In addition, the check-in hall will be enlarged, and new facilities such as shops, restaurants and a hotel will appear inside the terminal. The overall site will become considerably bigger and better organised.
-
-In summary, the redeveloped airport will be much larger, with more gates, an extra runway and improved passenger facilities.`,
-        tips: '用现在时描述现状、将来时/被动描述改建；突出新增跑道、登机口数量、停车场与设施；至少150词'
+In summary, sugar production is a linear, multi-stage process that turns raw sugar cane into refined sugar through crushing, purification, evaporation, centrifugation and drying.`,
+        tips: '用 first/then/after that/ finally 串联步骤；被动语态描述工艺；突出提纯与离心分离两道关键工序；至少150词'
       },
       {
         task: 'Task 2 (大作文)',
-        type: '议论文（原因+措施）',
-        prompt: 'In numerous nations, more and more people are intrigued in the idea of researching the history or past of the area where they now live.\n\nWhy is this?\n\nWhat can people do to do this research?\n\nWrite at least 250 words.',
-        modelAnswer: `In many countries today, a growing number of people are curious about the history of the place they live in. This essay will consider why this is happening and what steps individuals can take to investigate their local past.
+        type: '议论文（原因 + 利弊判断）',
+        prompt: 'In their advertising, businesses nowadays usually emphasise that their products are new in some way.\n\nWhy is this?\n\nDo you think it is a positive or negative development?\n\nWrite at least 250 words.',
+        modelAnswer: `Nowadays companies frequently highlight how their products are "new" or "improved", and this essay will consider why they do so and whether the trend is beneficial or harmful.
 
-One reason is a desire for identity and belonging. As societies become more mobile and urbanised, people feel disconnected from their roots, and learning about their neighbourhood's history helps them feel part of a community. Another factor is the availability of online records and genealogy websites, which make research far easier than before. Older residents also worry that local traditions will vanish, so they encourage younger people to take an interest.
+One reason is that consumers are naturally drawn to novelty. People enjoy the feeling of owning the latest version of a phone, a cosmetic or a household gadget, and advertisers exploit this desire to attract attention in a crowded market. Another reason is competition: with so many similar products available, a business must differentiate itself, and claiming constant innovation is an effective way to appear ahead of rivals. Rapid technological progress also makes genuine updates more frequent, giving firms a real basis for such claims.
 
-To carry out such research, people can start with public archives, such as census records, old maps and newspaper collections in local libraries. Talking to elderly neighbours is another valuable method, since oral history preserves details not written down. Community history groups and museums often hold photographs and documents, and volunteering with them can deepen understanding. Finally, visiting historical sites and reading plaques or guides connects abstract facts to real places.
+In my view, the emphasis on newness is largely a negative development. It encourages overconsumption, as people replace items that still work perfectly simply because a newer model exists, which wastes resources and increases rubbish. It can also be misleading, since many so-called "new" products differ only slightly from earlier ones. However, it is not entirely harmful: real innovation can improve lives, and competition to launch better products can drive genuine progress.
 
-In conclusion, curiosity about local history grows from a need for belonging and easier access to information, and can be satisfied through archives, conversations, community groups and site visits.`,
-        tips: '两段分别回答 why 与 what；每点举例；逻辑清晰；至少250词'
+In conclusion, businesses stress novelty because it appeals to consumers and helps them compete, but the practice tends to promote unnecessary consumption and is therefore more negative than positive.`,
+        tips: '首段说明 reasons（消费者爱新奇/竞争/技术迭代）；主体段给出个人立场（偏负面：鼓励过度消费、易误导，但亦含真实创新）；逻辑清晰；至少250词'
       }
     ];
 
