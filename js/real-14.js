@@ -97,7 +97,7 @@
 
     t1.reading.passages = [
       {
-        title: 'Passage 1: THE IMPORTANCE OF CHILDREN’S PLAY',
+        title: 'Passage 1: The Importance of Children’s Play',
         difficulty: '中等',
         summary: '探讨儿童游戏（play）对创造力、自控力、社交情感发展及日后学业成就的重要作用，以及现代社会游戏机会减少的现象。',
         questions: [
