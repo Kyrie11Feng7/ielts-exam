@@ -1626,15 +1626,12 @@
         var sel = window.getSelection();
         var text = sel ? sel.toString().trim() : '';
         if (!text || text.indexOf(' ') !== -1) return;
-        var meaning = window.prompt('为单词 "' + text + '" 添加释义：', '');
-        if (meaning && meaning.trim()) {
-          var vocab = Store.getVocab();
-          if (!vocab.some(function (v) { return v.word.toLowerCase() === text.toLowerCase(); })) {
-            vocab.unshift({ word: text, meaning: meaning.trim(), date: todayStr() });
-            Store.setVocab(vocab);
-            toast('已加入生词本：' + text);
-          } else { toast('生词本已有该词'); }
-        }
+        var vocab = Store.getVocab();
+        if (vocab.some(function (v) { return v.word.toLowerCase() === text.toLowerCase(); })) { toast('生词本已有该词'); return; }
+        vocab.unshift({ word: text, cn: '', en: '', phonetic: '', example: '', loading: true, date: todayStr() });
+        Store.setVocab(vocab);
+        toast('已加入生词本：' + text + '（正在获取释义…）');
+        autoFillDefinition(text);
       });
     });
   }
@@ -1828,39 +1825,154 @@
     window.scrollTo(0, 0);
   }
 
+  // ========== 生词自动释义（英文 dictionaryapi.dev + 中文 MyMemory，均免 key 且支持跨域）==========
+  function fetchWordInfo(rawWord) {
+    return new Promise(function (resolve) {
+      var word = (rawWord || '').trim();
+      var out = { ok: false, phonetic: '', enDef: '', example: '', cn: '' };
+      var settled = false;
+      function finish() { if (settled) return; settled = true; resolve(out); }
+      if (!word) { finish(); return; }
+      var enUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word.toLowerCase());
+      var cnUrl = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en%7Czh-CN';
+      var done = 0, total = 2;
+      function tick() { if (++done >= total) finish(); }
+      // 英文释义 + 音标 + 例句
+      fetch(enUrl).then(function (r) { return r.ok ? r.json() : Promise.reject(); }).then(function (data) {
+        try {
+          var arr = Array.isArray(data) ? data : [data];
+          var ph = arr[0].phonetic;
+          if (!ph && arr[0].phonetics && arr[0].phonetics.length) {
+            for (var i = 0; i < arr[0].phonetics.length; i++) { if (arr[0].phonetics[i].text) { ph = arr[0].phonetics[i].text; break; } }
+          }
+          if (ph) out.phonetic = ph;
+          var parts = [], ex = '';
+          arr.slice(0, 1).forEach(function (entry) {
+            (entry.meanings || []).slice(0, 3).forEach(function (m) {
+              var pos = m.partOfSpeech ? '[' + m.partOfSpeech + '] ' : '';
+              (m.definitions || []).slice(0, 2).forEach(function (d) {
+                parts.push(pos + d.definition);
+                if (!ex && d.example) ex = d.example;
+              });
+            });
+          });
+          out.enDef = parts.join('  ');
+          out.example = ex;
+          out.ok = true;
+        } catch (e) {}
+        tick();
+      }).catch(function () { tick(); });
+      // 中文释义
+      fetch(cnUrl).then(function (r) { return r.json(); }).then(function (data) {
+        try {
+          var t = data && data.responseData && data.responseData.translatedText;
+          if (t && !/MYMEMORY WARNING/.test(t)) out.cn = t;
+        } catch (e) {}
+        tick();
+      }).catch(function () { tick(); });
+      // 兜底超时，避免一直转圈
+      setTimeout(function () { if (done < total) { done = total; finish(); } }, 9000);
+    });
+  }
+
+  // 拉取后写回生词本并刷新列表（若当前正在看生词本）
+  function autoFillDefinition(word) {
+    fetchWordInfo(word).then(function (info) {
+      var arr = Store.getVocab();
+      var hit = null;
+      for (var i = 0; i < arr.length; i++) { if (arr[i].word.toLowerCase() === word.toLowerCase()) { hit = arr[i]; break; } }
+      if (!hit) return;
+      if (info.phonetic) hit.phonetic = info.phonetic;
+      if (info.enDef) hit.en = info.enDef;
+      if (info.example) hit.example = info.example;
+      if (info.cn) hit.cn = info.cn;
+      hit.loading = false;
+      Store.setVocab(arr);
+      refreshVocabList();
+    });
+  }
+
+  // 生词条目 -> HTML（含中文/英文释义、音标、例句、加载态）
+  function vocabListHtml(vocab) {
+    if (!vocab.length) {
+      return '<div class="empty-state"><div class="empty-icon">📝</div><h2>生词本为空</h2><p>在练习模式阅读真题中<b>双击单词</b>即可快速收藏，或在此手动添加</p></div>';
+    }
+    return vocab.map(function (v, idx) {
+      var cn = (v.cn != null && v.cn !== '') ? v.cn : v.meaning;
+      var phHtml = v.phonetic ? '<span class="vocab-ph">/ ' + escapeHtml(v.phonetic) + ' /</span>' : '';
+      var cnHtml = '', enHtml = '';
+      if (v.loading) {
+        enHtml = '<div class="vocab-en vocab-loading">⌛ 正在获取释义…</div>';
+        if (!cn) cnHtml = '<div class="vocab-cn vocab-muted">⌛ 获取中…</div>';
+      } else {
+        if (cn) cnHtml = '<div class="vocab-cn">' + escapeHtml(cn) + '</div>';
+        if (v.en) enHtml += '<div class="vocab-en"><span class="vocab-tag">EN</span> ' + escapeHtml(v.en) + '</div>';
+        if (v.example) enHtml += '<div class="vocab-ex">“' + escapeHtml(v.example) + '”</div>';
+        if (!v.en && !v.example) enHtml += '<div class="vocab-en vocab-muted">（未获取到英文释义）</div>';
+        if (!cn) cnHtml = '<div class="vocab-cn vocab-muted">（未获取到中文释义）</div>';
+      }
+      return '<div class="vocab-item" data-word="' + escapeHtml(v.word) + '">' +
+        '<div class="vocab-main"><div class="vocab-word">' + escapeHtml(v.word) + ' ' + phHtml + '</div>' +
+        cnHtml + enHtml + '</div>' +
+        '<button class="btn-small btn-del-vocab" data-vidx="' + idx + '">🗑</button></div>';
+    }).join('');
+  }
+
+  function bindVocabList() {
+    document.querySelectorAll('.btn-del-vocab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(this.getAttribute('data-vidx'), 10);
+        var arr = Store.getVocab();
+        arr.splice(i, 1);
+        Store.setVocab(arr);
+        refreshVocabList();
+        if (!arr.length) renderVocab();
+      });
+    });
+  }
+
+  function refreshVocabList() {
+    var el = document.getElementById('vocab-list');
+    if (!el) return;
+    var vocab = Store.getVocab();
+    el.innerHTML = vocabListHtml(vocab);
+    bindVocabList();
+    var cnt = document.getElementById('vocab-count');
+    if (cnt) cnt.textContent = '共 ' + vocab.length + ' 个单词';
+  }
+
   // ========== 生词本 ==========
   function renderVocab() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
     document.title = '生词本 - 雅思真题库';
     var vocab = Store.getVocab();
-    var listHtml = vocab.length ? vocab.map(function (v, idx) {
-      return '<div class="vocab-item"><div class="vocab-word">' + escapeHtml(v.word) + '</div>' +
-        '<div class="vocab-meaning">' + escapeHtml(v.meaning) + '</div>' +
-        '<button class="btn-small btn-del-vocab" data-vidx="' + idx + '">🗑</button></div>';
-    }).join('') : '<div class="empty-state"><div class="empty-icon">📝</div><h2>生词本为空</h2><p>在练习模式阅读真题中<b>双击单词</b>即可快速收藏，或在此手动添加</p></div>';
-
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词本</span></div>' +
-      '<div class="dash-header dash-header-row"><div><h1>📝 我的生词本</h1><p>共 ' + vocab.length + ' 个单词</p></div>' +
+      '<div class="dash-header dash-header-row"><div><h1>📝 我的生词本</h1><p id="vocab-count">共 ' + vocab.length + ' 个单词</p></div>' +
       (vocab.length ? '<button class="btn-primary" id="btn-vocab-study">🎴 开始背诵</button><button class="btn-secondary" id="btn-vocab-test">📝 单词测试</button>' : '') + '</div>' +
-      '<div class="vocab-add"><input type="text" id="vocab-word" placeholder="单词 (如: sustainable)">' +
-      '<input type="text" id="vocab-meaning" placeholder="释义">' +
-      '<button class="btn-primary" id="vocab-add-btn">添加</button></div>' +
-      '<div class="vocab-list">' + listHtml + '</div>' +
+      '<div class="vocab-add"><input type="text" id="vocab-word" placeholder="输入单词，自动查释义 (如: sustainable)">' +
+      '<input type="text" id="vocab-meaning" placeholder="中文释义（可选，留空自动获取）">' +
+      '<button class="btn-primary" id="vocab-add-btn">+ 添加</button></div>' +
+      '<div class="vocab-tip">💡 添加单词后会<b>自动获取中文释义与英文释义</b>（含音标与例句）</div>' +
+      '<div class="vocab-list" id="vocab-list">' + vocabListHtml(vocab) + '</div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
 
     function doAdd() {
       var w = document.getElementById('vocab-word').value.trim();
-      var m = document.getElementById('vocab-meaning').value.trim();
+      var note = document.getElementById('vocab-meaning').value.trim();
       if (!w) { toast('请输入单词'); return; }
       var arr = Store.getVocab();
-      if (!arr.some(function (v) { return v.word.toLowerCase() === w.toLowerCase(); })) {
-        arr.unshift({ word: w, meaning: m || '（未填释义）', date: todayStr() });
-        Store.setVocab(arr);
-        renderVocab();
-        toast('已添加：' + w);
-      } else { toast('该词已存在'); }
+      if (arr.some(function (v) { return v.word.toLowerCase() === w.toLowerCase(); })) { toast('该词已存在'); return; }
+      arr.unshift({ word: w, cn: note, en: '', phonetic: '', example: '', loading: true, date: todayStr() });
+      Store.setVocab(arr);
+      document.getElementById('vocab-word').value = '';
+      document.getElementById('vocab-meaning').value = '';
+      var cnt = document.getElementById('vocab-count'); if (cnt) cnt.textContent = '共 ' + arr.length + ' 个单词';
+      var listEl = document.getElementById('vocab-list'); if (listEl) listEl.innerHTML = vocabListHtml(arr);
+      bindVocabList();
+      toast('已添加：' + w + '（正在获取释义…）');
+      autoFillDefinition(w);
     }
     document.getElementById('vocab-add-btn').addEventListener('click', doAdd);
     var studyBtn = document.getElementById('btn-vocab-study');
@@ -1869,15 +1981,7 @@
     if (testBtn) testBtn.addEventListener('click', function () { renderVocabTest(); });
     document.getElementById('vocab-word').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
     document.getElementById('vocab-meaning').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
-    document.querySelectorAll('.btn-del-vocab').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var i = parseInt(this.getAttribute('data-vidx'), 10);
-        var arr = Store.getVocab();
-        arr.splice(i, 1);
-        Store.setVocab(arr);
-        renderVocab();
-      });
-    });
+    bindVocabList();
     window.scrollTo(0, 0);
   }
 
@@ -1954,8 +2058,12 @@
         '<div class="study-progress"><div class="study-bar" style="width:' + Math.round((pos / total) * 100) + '%"></div></div>' +
         '<div class="study-counter">第 ' + (pos + 1) + ' / ' + total + ' 个</div>' +
         '<div class="flashcard" id="flashcard">' +
-        '<div class="flash-word">' + escapeHtml(v.word) + '</div>' +
-        '<div class="flash-meaning" id="flash-meaning" data-hidden="true">《' + escapeHtml(v.meaning) + '》</div>' +
+        '<div class="flash-word">' + escapeHtml(v.word) + (v.phonetic ? ' <span class="flash-ph">/ ' + escapeHtml(v.phonetic) + ' /</span>' : '') + '</div>' +
+        '<div class="flash-meaning" id="flash-meaning" data-hidden="true">' +
+          ((v.cn != null && v.cn !== '') ? '<div class="flash-cn">' + escapeHtml(v.cn) + '</div>' : (v.meaning ? '<div class="flash-cn">' + escapeHtml(v.meaning) + '</div>' : '')) +
+          (v.en ? '<div class="flash-en"><span class="flash-tag">EN</span> ' + escapeHtml(v.en) + '</div>' : '') +
+          (v.example ? '<div class="flash-ex">“' + escapeHtml(v.example) + '”</div>' : '') +
+        '</div>' +
         '<button class="btn-small" id="flash-reveal">👁 显示释义</button>' +
         '</div>' +
         '<div class="study-actions">' +
