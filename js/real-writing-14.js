@@ -1,7 +1,7 @@
 /*
- * 剑14 写作真实剑桥真题覆盖补丁
+ * 剑14 写作剑桥练习题目覆盖补丁
  * 来源: mdhira-ai/advancedenglishtests-updated (app/cambridge/book-14/writing/test-M/page.tsx)
- * 说明: 写作题目(prompt)为真实剑桥雅思原题；modelAnswer 为权威范文。
+ * 说明: 写作题目(prompt)为剑桥雅思原题；modelAnswer 为权威范文。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
