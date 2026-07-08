@@ -1,6 +1,6 @@
 /**
- * 剑19 Test 1 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思19 Test 1 真题。
+ * 剑19 Test 1 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思19 Test 1 练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — laokaoya (剑桥雅思19Test1 Part1-4)
  *   阅读原文/题目/答案 — engnovate / ieltsmaterial / laokaoya (剑桥雅思19 Test1 R1-R3)
@@ -429,5 +429,5 @@ However, archaeologists believe that this way of life at Ceide ceased abruptly. 
 So now I'd like to show you some...`;
   }
 
-  console.log('[real-19t1] 剑19 Test1 已覆盖为真实剑桥雅思内容');
+  console.log('[real-19t1] 剑19 Test1 已覆盖为练习题目（待与原版书核对）');
 })();
