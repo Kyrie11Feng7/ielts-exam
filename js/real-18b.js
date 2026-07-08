@@ -1,13 +1,13 @@
 /**
- * 剑18 Test 3 & Test 4 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js / 各 data-extra 中 AI 生成的"原创练习"内容替换为真实剑桥雅思18 Test 3、Test 4 真题。
+ * 剑18 Test 3 & Test 4 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js / 各 data-extra 中 AI 生成的"原创练习"内容替换为剑桥雅思18 Test 3、Test 4 练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — laokaoya (剑桥雅思18Test3 / Test4 各 Part 原文与答案)、ielts-hub、ieltsxpress、engnovate
  *   阅读原文/题目/答案 — engnovate (Cambridge IELTS 18 Academic Reading Test 3 / Test 4)、ielts-hub、ieltsextremes
  *   写作题目 — engnovate / blog.scitudy (Cambridge IELTS 18 Writing Test 3 / Test 4)
  *   口语话题 — engnovate (Cambridge IELTS 18 Academic Speaking Test 3 / Test 4)、ieltspracticeonline
  * 注意：
- *   - 原文 / 题目 / 题目答案键 为真实剑桥雅思18 (Cambridge University Press) 考题内容；
+ *   - 原文 / 题目 / 题目答案键 为剑桥雅思18 (Cambridge University Press) 考题内容；
  *   - 写作 modelAnswer 与口语 a:"参考回答: ..." 为学习用示例文本（非官方范文/标准回答），仅作备考参考；
  *   - 听力/阅读/写作用英文，口语示例用中文"参考回答"。
  * 本文件须放在所有数据文件（data.js + data-extra*.js）与 listening-scripts.js 之后、app.js 之前加载。
@@ -913,5 +913,5 @@ So, Victor Hugo was a man of many talents, but he was also true to his values. W
 
 In 1927, the house was owned by his relatives, and they decided to donate it to the city of Paris. It has since been restored using photographs from the period and, as I mentioned earlier, is now a museum that is open to the public.`;
 
-  console.log('[real-18b] 剑18 Test 3 & Test 4 已覆盖为真实剑桥雅思内容');
+  console.log('[real-18b] 剑18 Test 3 & Test 4 已覆盖为练习题目（待与原版书核对）');
 })();
