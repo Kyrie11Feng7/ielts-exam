@@ -1,15 +1,15 @@
 /**
- * 剑18 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思18 Test 1、Test 2 真题。
+ * 剑18 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思18 Test 1、Test 2 练习题目。
  *
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — laokaoya（剑桥雅思18Test1/Test2听力答案）+ engnovate（Cambridge IELTS 18 Academic Listening Test 1/2 原文与题目）
- *   阅读原文/题目/答案 — engnovate（Cambridge IELTS 18 Academic Reading Test 1/2 全文与题目）+ laokaoya（剑桥雅思18Test1/Test2阅读答案，已交叉核对）
+ *   阅读原文/题目/答案 — engnovate（Cambridge IELTS 18 Academic Reading Test 1/2 全文与题目）+ laokaoya（剑桥雅思18Test1/Test2阅读答案，待与原版书核对）
  *   写作题目 — engnovate（Cambridge IELTS 18 Writing Test 1/2 Task 1/2）+ ieltsanswers（剑桥18 Task 2 题目）
  *   口语话题 — ieltspracticeonline（C.A.M 18 Speaking Test 1/2，与 ieltsworldly 一致）
  *
  * 重要说明：
- *   - 原文、题目、答案键均为真实剑桥雅思18真题内容（已与 laokaoya 官方答案键交叉核对）。
+ *   - 原文、题目、答案键均为剑桥雅思18练习题目内容（已与 laokaoya 官方答案键交叉核对）。
  *   - 范文(modelAnswer)与口语"参考回答"为学习用示例文本（非官方范文），仅供参考。
  *   - 听力原文脚本转录自 engnovate / ieltszone 等公开资源，个别发音/拼写可能与官方音频略有出入。
  *   - Test 2 口语话题存在来源分歧：ieltspracticeonline / ieltsworldly 记为 Science + tourist attraction；
@@ -793,5 +793,5 @@ So the tie-on pockets went well into the 19th century and only changed when fash
     }
   }
 
-  console.log('[real-18a] 剑18 Test1 & Test2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-18a] 剑18 Test1 & Test2 已覆盖为练习题目（待与原版书核对）');
 })();
