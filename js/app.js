@@ -364,7 +364,7 @@
     bindAnswerToggles();
     bindAudioPlayers(bookId, testId);
     bindVocabSelection();
-    bindSpeakRecorder();
+    bindSpeakingScorer();
     window.scrollTo(0, 0);
   }
 
@@ -538,12 +538,7 @@
         '<div class="exam-section"><div class="exam-section-header">' +
         '<span class="exam-section-tag tag-speaking">' + part.part + '</span></div>' +
         (part.intro ? '<p class="exam-section-context">' + part.intro + '</p>' : '') + content +
-        '<div class="speak-recorder" data-rec-key="' + recKey + '">' +
-        '<button class="btn-small btn-rec">🎙 录音作答</button>' +
-        '<button class="btn-small btn-stop-rec" style="display:none;">⏹ 停止</button>' +
-        '<button class="btn-small btn-del-rec" style="display:none;">🗑 删除</button>' +
-        '<span class="rec-status"></span>' +
-        '<div class="rec-playback"></div></div>' +
+        speakScorerHtml(recKey, part.part, part.cueCard || (part.questions ? part.questions.map(function (q) { return q.q; }).join(' | ') : '')) +
         '</div>'
       );
     }).join('');
@@ -1592,6 +1587,7 @@
     else if (page === 'fav') renderFavorites();
     else if (page === 'vocab') renderVocab();
     else if (page === 'speaking') renderSpeakingBank();
+    else if (page === 'speaking-scores') renderSpeakingScores();
     else if (page === 'writing-tpl') renderWritingTemplates();
     else if (page === 'writing-samples') renderWritingSamples();
     else if (page === 'vocab-test') renderVocabTest();
@@ -2361,6 +2357,195 @@
   }
 
   // ==========================================
+  // ========== 口语四项标准评分（录音转写 + 评分 + 历史）==========
+  // ==========================================
+  function bandClass(band) { var b = Math.round(Math.min(9, Math.max(0, band))); return b; }
+
+  // 评分面板 HTML（录音转写 + 手动文本兜底）
+  function speakScorerHtml(recKey, part, prompt) {
+    return '<div class="speak-scorer" data-rec-key="' + escapeHtml(recKey) + '" data-part="' + escapeHtml(part) + '" data-prompt="' + escapeHtml(prompt || '') + '">' +
+      '<div class="ss-controls">' +
+        '<button class="btn-small btn-ss-rec">🎤 录音并评分</button>' +
+        '<button class="btn-small btn-ss-stop" style="display:none;">⏹ 停止</button>' +
+        '<span class="ss-timer">00:00</span>' +
+        '<button class="btn-small btn-ss-manual">✍️ 手动输入文本评分</button>' +
+        '<span class="ss-status"></span>' +
+      '</div>' +
+      '<div class="ss-live" style="display:none;"><span class="ss-live-label">实时转写：</span><span class="ss-live-text"></span></div>' +
+      '<div class="ss-manual" style="display:none;">' +
+        '<textarea class="ss-textarea" placeholder="把你的英文作答粘贴到这里进行评分（适用于不支持语音识别的浏览器）…"></textarea>' +
+        '<div class="ss-manual-row">' +
+          '<label>作答时长(秒)：<input type="number" class="ss-dur" value="60" min="5" max="600"></label>' +
+          '<label>发音自评(0-9，可选)：<input type="number" class="ss-pron" placeholder="可选" min="0" max="9" step="0.5"></label>' +
+          '<button class="btn-small ss-score-btn">开始评分</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ss-playback"></div>' +
+      '<div class="ss-result"></div>' +
+    '</div>';
+  }
+
+  function renderScoreResult(container, r, meta) {
+    if (!container) return;
+    function gauge(k) {
+      var cr = r.criteria[k];
+      var pct = Math.round(Math.min(9, Math.max(0, cr.band)) / 9 * 100);
+      var fb = cr.feedback.map(function (f) { return '<li>' + escapeHtml(f) + '</li>'; }).join('');
+      return '<div class="ss-crit">' +
+        '<div class="ss-crit-head"><span class="ss-crit-name">' + escapeHtml(cr.label) + '</span>' +
+        '<span class="band-badge band-' + bandClass(cr.band) + '">' + cr.band.toFixed(1) + '</span></div>' +
+        '<div class="ss-bar"><div class="ss-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="ss-crit-desc">' + escapeHtml(cr.desc) + '</div>' +
+        (fb ? '<ul class="ss-fb">' + fb + '</ul>' : '') + '</div>';
+    }
+    container.innerHTML = '<div class="ss-result-inner">' +
+      '<div class="ss-overall"><div class="ss-overall-num band-text-' + bandClass(r.overall) + '">' + r.overall.toFixed(1) + '</div>' +
+      '<div class="ss-overall-label">总体得分 Overall Band</div></div>' +
+      '<div class="ss-gauges">' + gauge('fc') + gauge('lr') + gauge('gra') + gauge('p') + '</div>' +
+      '<div class="ss-disclaimer">⚠️ 本评分按雅思官方四项标准（流利度/词汇/语法/发音）自动评估，供练习参考：前三项依据你的转写文本分析，发音项为语音识别置信度近似估算（非声学判定），<b>不能替代雅思考官人工评分</b>。建议结合范文与老师反馈持续改进。</div>' +
+      '</div>';
+    container.style.display = '';
+  }
+
+  function saveSpeakingScore(res, part) {
+    try {
+      var arr = JSON.parse(localStorage.getItem('ielts_speaking_scores_v1') || '[]');
+      if (!Array.isArray(arr)) arr = [];
+      arr.unshift({
+        date: todayStr(), part: part, overall: res.overall,
+        fc: res.criteria.fc.band, lr: res.criteria.lr.band, gra: res.criteria.gra.band, p: res.criteria.p.band,
+        words: res.metrics.wordCount, preview: (res.transcript || '').slice(0, 90)
+      });
+      if (arr.length > 60) arr = arr.slice(0, 60);
+      localStorage.setItem('ielts_speaking_scores_v1', JSON.stringify(arr));
+      toast('已保存本次口语评分');
+    } catch (e) {}
+  }
+
+  function bindSpeakingScorer() {
+    document.querySelectorAll('.speak-scorer').forEach(function (el) {
+      if (el.dataset.bound) return;
+      el.dataset.bound = '1';
+      var recKey = el.getAttribute('data-rec-key');
+      var part = el.getAttribute('data-part') || 'Part 2';
+      var prompt = el.getAttribute('data-prompt') || '';
+      var recBtn = el.querySelector('.btn-ss-rec');
+      var stopBtn = el.querySelector('.btn-ss-stop');
+      var manualBtn = el.querySelector('.btn-ss-manual');
+      var manualPanel = el.querySelector('.ss-manual');
+      var manualScoreBtn = el.querySelector('.ss-score-btn');
+      var statusEl = el.querySelector('.ss-status');
+      var timerEl = el.querySelector('.ss-timer');
+      var liveBox = el.querySelector('.ss-live');
+      var liveText = el.querySelector('.ss-live-text');
+      var playback = el.querySelector('.ss-playback');
+      var resultBox = el.querySelector('.ss-result');
+
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var hasSR = !!SR;
+      if (recBtn && !hasSR) recBtn.style.display = 'none';
+
+      function setStatus(s) { if (statusEl) statusEl.textContent = s; }
+      function fmtTime(sec) { var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
+      function doScore(transcript, dur, conf, pron) {
+        if (!window.IELTS_SPEAKING_SCORER) { toast('评分引擎未加载'); return; }
+        var res = window.IELTS_SPEAKING_SCORER.analyze({ transcript: transcript, durationSec: dur, part: part, confidenceAvg: conf, manualPron: pron });
+        renderScoreResult(resultBox, res, { part: part, prompt: prompt });
+        saveSpeakingScore(res, part);
+      }
+
+      if (manualBtn) manualBtn.addEventListener('click', function () { if (manualPanel) manualPanel.style.display = (manualPanel.style.display === 'none' ? '' : 'none'); });
+      if (manualScoreBtn) manualScoreBtn.addEventListener('click', function () {
+        var ta = el.querySelector('.ss-textarea');
+        var durInput = el.querySelector('.ss-dur');
+        var pronInput = el.querySelector('.ss-pron');
+        var text = ta ? ta.value.trim() : '';
+        if (!text) { toast('请先在文本框中输入你的英文作答'); return; }
+        var dur = durInput ? (parseInt(durInput.value, 10) || 0) : 0;
+        var pronRaw = pronInput ? pronInput.value : '';
+        var pron = (pronRaw === '' || pronRaw == null) ? null : parseFloat(pronRaw);
+        doScore(text, dur, null, pron);
+      });
+
+      if (!(recBtn && hasSR)) return;
+
+      recBtn.addEventListener('click', function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('当前浏览器不支持麦克风录音'); return; }
+        recBtn.disabled = true;
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+          var mr = null, chunks = [];
+          try {
+            mr = new MediaRecorder(stream);
+            mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+            mr.onstop = function () {
+              try {
+                var blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+                if (playback) playback.innerHTML = '<audio controls src="' + URL.createObjectURL(blob) + '"></audio>';
+              } catch (e2) {}
+              stream.getTracks().forEach(function (t) { t.stop(); });
+            };
+            mr.start();
+          } catch (e) { /* 录音回放不可用不影响评分 */ }
+          var rec = new SR();
+          rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
+          var finalText = '', confSum = 0, confN = 0, startTime = Date.now();
+          el._rec = rec;
+          rec.onresult = function (ev) {
+            var interim = '';
+            for (var i = ev.resultIndex; i < ev.results.length; i++) {
+              var rr = ev.results[i], txt = rr[0].transcript;
+              if (rr.isFinal) { finalText += txt + ' '; if (typeof rr[0].confidence === 'number') { confSum += rr[0].confidence; confN++; } }
+              else interim += txt;
+            }
+            if (liveText) liveText.textContent = finalText + interim;
+          };
+          rec.onerror = function (e) { setStatus('识别中断：' + (e.error || '未知') + '，可改用“手动输入文本评分”'); };
+          rec.onend = function () {
+            if (el._timerInt) { clearInterval(el._timerInt); el._timerInt = null; }
+            if (mr && mr.state !== 'inactive') { try { mr.stop(); } catch (e3) {} }
+            if (stopBtn) stopBtn.style.display = 'none';
+            recBtn.disabled = false;
+            var dur = Math.round((Date.now() - startTime) / 1000);
+            if (!finalText.trim()) { setStatus('未识别到有效语音，请改用手动输入文本评分'); return; }
+            doScore(finalText.trim(), dur, confN ? confSum / confN : null, null);
+          };
+          try { rec.start(); } catch (e) { setStatus('无法启动语音识别'); recBtn.disabled = false; if (mr) try { mr.stop(); } catch (e4) {} stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+          if (liveBox) liveBox.style.display = '';
+          setStatus('● 正在聆听并转写…说完后点“停止”');
+          if (stopBtn) stopBtn.style.display = '';
+          el._timerInt = setInterval(function () { if (timerEl) timerEl.textContent = fmtTime(Math.round((Date.now() - startTime) / 1000)); }, 500);
+        }).catch(function () {
+          recBtn.disabled = false;
+          setStatus('无法访问麦克风（权限被拒绝）');
+          toast('麦克风权限被拒绝，请在浏览器设置中允许麦克风，或用“手动输入文本评分”');
+        });
+      });
+      if (stopBtn) stopBtn.addEventListener('click', function () { if (el._rec) { try { el._rec.stop(); } catch (e5) {} } });
+    });
+  }
+
+  function renderSpeakingScores() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '口语评分记录 - 雅思练习库';
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem('ielts_speaking_scores_v1') || '[]'); } catch (e) {}
+    if (!Array.isArray(arr)) arr = [];
+    var list = arr.length ? arr.map(function (s) {
+      return '<div class="ss-hist-item">' +
+        '<div class="ss-hist-overall band-text-' + bandClass(s.overall) + '">' + Number(s.overall).toFixed(1) + '</div>' +
+        '<div class="ss-hist-body"><div class="ss-hist-meta">' + escapeHtml(s.part) + ' · ' + escapeHtml(s.date) + ' · ' + (s.words || 0) + ' 词</div>' +
+        '<div class="ss-hist-bands">FC ' + Number(s.fc).toFixed(1) + ' · LR ' + Number(s.lr).toFixed(1) + ' · GRA ' + Number(s.gra).toFixed(1) + ' · P ' + Number(s.p).toFixed(1) + '</div>' +
+        (s.preview ? '<div class="ss-hist-prev">' + escapeHtml(s.preview) + (s.preview.length >= 90 ? '…' : '') + '</div>' : '') +
+        '</div></div>';
+    }).join('') : '<div class="empty-state"><div class="empty-icon">🗣️</div><h2>还没有口语评分记录</h2><p>在口语练习中录音或粘贴文本进行评分后，记录会显示在这里。</p></div>';
+    app.innerHTML = breadcrumb('口语评分记录') +
+      '<div class="dash-header"><h1>🗣️ 我的口语评分记录</h1><p>按雅思四项标准自动评分的历史（练习参考）</p></div>' +
+      '<div class="ss-hist-list">' + list + '</div>' + backHome();
+    window.scrollTo(0, 0);
+  }
+
+  // ==========================================
   // ========== 新功能（第三轮）：口语库 / 写作模板 / 单词测试 / 社区反馈 / 满意度 ==========
   // ==========================================
 
@@ -2455,7 +2640,7 @@
         return '<div class="topic-card" data-sb-topic="' + ti + '"><div class="topic-icon">🗣️</div><h3>' + escapeHtml(t.title) + '</h3><p>Part1 · Part2 · Part3 完整范文</p><span class="topic-go">查看 →</span></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(false, '📝 练习话题') + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，话题与问题为雅思练习内容，示范回答为参考示例</p></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>🗣️ 雅思口语话题库 ' + examTag(false, '📝 练习话题') + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，话题与问题为雅思练习内容，示范回答为参考示例</p></div><button class="btn-small" data-nav-page="speaking-scores">📈 我的口语评分记录</button></div>' +
         tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
       bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
       bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); sbP2Ver = 0; renderSpeakingBank(); });
@@ -2480,10 +2665,13 @@
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
         '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + bookTag() + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
-        '<div class="speak-detail"><h2>Part 1</h2>' + p1 + '<h2>Part 2 · 话题卡</h2>' + p2 + '<h2>Part 3</h2>' + p3 + '</div>' +
+        '<div class="speak-detail"><h2>Part 1</h2>' + p1 + speakScorerHtml('sb-' + sbCat + '-' + sbTopic + '-p1', 'Part 1', '') +
+        '<h2>Part 2 · 话题卡</h2>' + p2 + speakScorerHtml('sb-' + sbCat + '-' + sbTopic + '-p2', 'Part 2', t.part2.cueCard) +
+        '<h2>Part 3</h2>' + p3 + speakScorerHtml('sb-' + sbCat + '-' + sbTopic + '-p3', 'Part 3', '') + '</div>' +
         '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
       var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
       var b2 = document.getElementById('sb-back2'); if (b2) b2.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
+      bindSpeakingScorer();
       bindClick('[data-p2-ver]', function (el) {
         var i = parseInt(el.getAttribute('data-p2-ver'), 10);
         sbP2Ver = i;
