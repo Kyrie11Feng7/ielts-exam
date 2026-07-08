@@ -1,6 +1,6 @@
 /**
- * 剑13 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js / data-extra*.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思13 Test 1、Test 2 真题。
+ * 剑13 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js / data-extra*.js 中 AI 生成的"原创练习"内容替换为剑桥雅思13 Test 1、Test 2 练习题目。
  *       （注意：data.js 中剑13 tests:[] 为空，Test 2 由 data-extra2-1.js 以 AI 内容预填；本文件创建/覆盖两者。）
  *
  * 数据核对来源（公开权威解析，含原题答案键）：
@@ -10,7 +10,7 @@
  *   口语话题       — engnovate / ieltszone / babarenglish Cambridge IELTS 13 Speaking Test 1 & 2
  *
  * 免责声明：
- *   - 原文（阅读 passage text）、听力录音原文、题目与答案为真实剑桥雅思13真题内容（来源见上，已交叉核对）。
+ *   - 原文（阅读 passage text）、听力录音原文、题目与答案为剑桥雅思13练习题目内容（来源见上，待与原版书核对）。
  *   - 写作 modelAnswer 与口语 a:'参考回答: ...' 均为「学习用示例文本」，非官方范文/标准回答。
  *   - 阅读 Passage 3（Test 2 公司匹配 32–37）答案已据原文逐条复核。
  *
@@ -876,5 +876,5 @@ One study looked at a ...`;
     }
   });
 
-  console.log('[real-13] 剑13 Test1 & Test2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-13] 剑13 Test1 & Test2 已覆盖为练习题目（待与原版书核对）');
 })();
