@@ -1,6 +1,6 @@
 /**
- * 剑16 Test 3 & Test 4 真实剑桥雅思内容覆盖补丁
- * 目的：将 data-extra3-1.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思16 Test 3、Test 4 真题。
+ * 剑16 Test 3 & Test 4 剑桥雅思内容覆盖补丁
+ * 目的：将 data-extra3-1.js 中 AI 生成的"原创练习"内容替换为剑桥雅思16 Test 3、Test 4 练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ieltsxpress (Cambridge IELTS 16 Listening Test 3/4 Audio Transcript)、ieltsextremes (answer key)
  *   阅读原文/题目/答案 — ieltsxpress (Cambridge IELTS 16 Academic Reading 3/4)、laokaoya (剑16T4阅读答案)
@@ -854,5 +854,5 @@ So it looks as if the dodo was better able to survive and defend itself than was
 However, we now think that probably the main cause of the birds' extinction was not the introduction of non-native species, but the introduction of agriculture. This meant that the forest that had once covered all the island, and that had provided a perfect home for the dodo, was cut down so that crops such as sugar could be grown. So although the dodo had survived for thousands of years, suddenly it was gone.`;
   }
 
-  console.log('[real-16b] 剑16 Test3&4 已覆盖为真实剑桥雅思内容');
+  console.log('[real-16b] 剑16 Test3&4 已覆盖为练习题目（待与原版书核对）');
 })();
