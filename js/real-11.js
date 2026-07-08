@@ -1,12 +1,12 @@
 /**
- * 剑11 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思11（Cambridge IELTS 11）真题。
- * 修正后映射（真实剑11阅读真题，已与 laokaoya 权威答案键交叉核对）：
+ * 剑11 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思11（Cambridge IELTS 11）练习题目。
+ * 修正后映射（真实剑11阅读练习题目，已与 laokaoya 权威答案键交叉核对）：
  *   Test 1 阅读 = Raising the Mary Rose / What destroyed the civilisation of Easter Island? / Neuroaesthetics
  *   Test 2 阅读 = Crop-growing skyscrapers / The Falkirk Wheel / Reducing the Effects of Climate Change
  *   （两篇阅读均属真实剑11内容，仅按本题要求将对应文章分配到指定 Test 槽位。）
  *
- * 数据核对来源（公开权威解析，含原题答案键，均已交叉核对）：
+ * 数据核对来源（公开权威解析，含原题答案键，均待与原版书核对）：
  *   听力题目/答案 — ieltstrainingonline (Practice Cam 11 Listening Test 01/02)
  *   听力原文/转录 — laokaoya (剑11 Test1/Test2 各 Section 听力原文)，ieltstrainingonline audioscripts
  *   阅读原文/题目/答案 — ieltstrainingonline (Practice Cam 11 Reading Test 01/02，含逐字原文)，
@@ -456,7 +456,7 @@ So finally, what can be done to retain the diversity of species in the world's o
 OK. So does anyone have any …`;
     }
 
-    console.log('[real-11] 剑11 Test1 已覆盖为真实剑桥雅思内容');
+    console.log('[real-11] 剑11 Test1 已覆盖为练习题目（待与原版书核对）');
   }
 
   // ===================================================================
@@ -894,6 +894,6 @@ The auditorium itself seats 1500 people. The floor's supported by ten massive pa
 The reaction of the public to the new building has generally been positive. However, the evaluation of some critics has been less enthusiastic. In spite of Harrison's efforts to use local materials, they criticise the style of the design as being international rather than local, and say it doesn't reflect features of the landscape or society for which it is built.`;
     }
 
-    console.log('[real-11] 剑11 Test2 已覆盖为真实剑桥雅思内容');
+    console.log('[real-11] 剑11 Test2 已覆盖为练习题目（待与原版书核对）');
   }
 })();
