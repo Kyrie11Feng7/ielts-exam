@@ -1,6 +1,6 @@
 /**
- * 剑17 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思17 真题（Tests 1、2）。
+ * 剑17 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思17 练习题目（Tests 1、2）。
  *
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ielts-hub (Cambridge 17 Listening Test 1/2 完整 transcript)、ielts-training-online
@@ -910,5 +910,5 @@ On the positive side, they know that Icelandic is still the official language of
 This raises important questions. When you consider how much of the past is tied up in a language, will young Icelanders lose their sense of their own identity? Another issue that concerns the government of Iceland is this. If children are learning two languages through different routes, neither of which they are fully fluent in, will they be able to express themselves properly?`;
   }
 
-  console.log('[real-17a] 剑17 Test1 & Test2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-17a] 剑17 Test1 & Test2 已覆盖为练习题目（待与原版书核对）');
 })();
