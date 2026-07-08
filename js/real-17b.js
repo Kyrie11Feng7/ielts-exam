@@ -1,6 +1,6 @@
 /**
- * 剑17 Test 3 & Test 4 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思17 真题（Tests 3、4）。
+ * 剑17 Test 3 & Test 4 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思17 练习题目（Tests 3、4）。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ieltstrainingonline (Cambridge 17 Listening Test 3/4 题目+答案), ielts-hub / ieltsxpress (Test3/4 完整 transcript)
  *   阅读原文/题目/答案 — ieltsxpress (Test3: The Thylacine / Palm Oil / Building the Skyline; Test4: Madagascar bats / Education & Economic Growth / Timur Gareyev), laokaoya (Test4 官方答案键), engnovate (Test4 P3 题面与答案)
@@ -938,5 +938,5 @@ When the tree is ready, it can be tapped and this involves drilling a small hole
 So that's the basic process. In places like Quebec where…`;
   }
 
-  console.log('[real-17b] 剑17 Test3 & Test4 已覆盖为真实剑桥雅思内容');
+  console.log('[real-17b] 剑17 Test3 & Test4 已覆盖为练习题目（待与原版书核对）');
 })();
