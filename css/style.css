@@ -711,6 +711,28 @@ body {
   margin-right: 6px;
 }
 
+/* ========== 官方题型说明 + 选项 ========== */
+.q-instruction {
+  margin: 10px 0 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+  background: #f8fafc;
+  border-left: 3px solid var(--color-primary, #2563eb);
+  border-radius: 4px;
+}
+.q-options {
+  margin: 6px 0 2px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text, #1e293b);
+}
+.q-options li {
+  margin: 2px 0;
+}
+
 /* ========== 答案区域 ========== */
 .answer-text {
   display: none;
