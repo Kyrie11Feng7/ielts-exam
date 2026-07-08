@@ -178,7 +178,7 @@
         '<div class="book-year">' + book.year + '</div>' +
         '</div>' +
         '<div class="book-card-body">' +
-        '<h3>' + book.fullTitle + '</h3>' +
+        '<h3>' + book.fullTitle + (book.officialSample ? ' <span class="exam-tag tag-official">✅ 官方样题</span>' : '') + '</h3>' +
         '<p class="book-desc">' + book.desc + '</p>' +
         badge +
         '</div>' +
@@ -230,6 +230,7 @@
       '<div class="stat"><span class="stat-num">4</span><span class="stat-label">考试模块</span></div>' +
       '<div class="stat"><span class="stat-num">40</span><span class="stat-label">每套题数</span></div>' +
       '</div>' +
+      '<p class="hero-note">✅ <b>官方样题</b>：雅思官方（ielts.org）免费发布的真实题目，逐字还原。　📝 <b>练习</b>：非官方练习题，仅供训练，并非剑桥真题。</p>' +
       '</div>' +
       '</section>' +
       modeToggleHtml +
@@ -280,6 +281,7 @@
     currentView = { bookId: bookId, testId: null };
     TTS.stop();
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     if (!book) { renderHome(); return; }
     document.title = book.fullTitle + ' - 雅思练习库';
 
@@ -338,6 +340,7 @@
     currentView = { bookId: bookId, testId: testId };
     TTS.stop();
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     if (!book) { renderHome(); return; }
     const test = book.tests.find(function (t) { return t.id === testId; });
     if (!test) { renderBook(bookId); return; }
@@ -348,7 +351,7 @@
       '<a href="#" data-nav="home">首页</a><span class="sep">/</span>' +
       '<a href="#" data-nav="book" data-book="' + bookId + '">' + book.fullTitle + '</a><span class="sep">/</span>' +
       '<span>' + test.title + '</span></div>' +
-      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + examTag(false, '📝 练习') + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
+      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + bookTag() + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
       '<div class="sections-container">' +
       renderListening(test.listening, bookId, testId) +
       renderReading(test.reading) +
@@ -397,9 +400,10 @@
         );
       }).join('');
 
-      const scriptHtml = hasScript
+      const scriptText = hasScript ? LISTENING_SCRIPTS[scriptKey] : (section.audioScript || '');
+      const scriptHtml = scriptText
         ? '<div class="audio-script-wrapper"><button class="btn-script-toggle">📄 查看听力原文</button>' +
-          '<div class="audio-script-full" data-hidden="true">' + formatScript(LISTENING_SCRIPTS[scriptKey]) + '</div></div>'
+          '<div class="audio-script-full" data-hidden="true">' + formatScript(scriptText) + '</div></div>'
         : '';
 
       return (
@@ -414,7 +418,7 @@
 
     return (
       '<div class="module-block module-listening">' +
-      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + ' ' + bookTag() + '</h2>' +
       '<p class="module-intro">' + data.intro + ' · 支持语音朗读原文</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       sectionsHtml + '</div>'
@@ -475,7 +479,7 @@
     }).join('');
     return (
       '<div class="module-block module-reading">' +
-      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
+      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + ' ' + bookTag() + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       passagesHtml + '</div>'
@@ -485,7 +489,7 @@
   // ========== 练习模式：写作渲染 ==========
   function renderWriting(data) {
     const tasksHtml = data.tasks.map(function (task, idx) {
-      const modelAnswerHtml = task.modelAnswer.split('\n').map(function (line) {
+      const modelAnswerHtml = (task.modelAnswer || '').split('\n').map(function (line) {
         return line.trim() ? '<p>' + escapeHtml(line) + '</p>' : '';
       }).join('');
       return (
@@ -495,13 +499,13 @@
         '<div class="writing-prompt"><h4>题目要求</h4><p>' + escapeHtml(task.prompt) + '</p></div>' +
         '<div class="writing-answer" data-hidden="true"><h4>参考范文</h4>' +
         '<div class="model-answer">' + modelAnswerHtml + '</div>' +
-        '<div class="writing-tips"><span>💡 写作提示：</span>' + task.tips + '</div></div>' +
+        '<div class="writing-tips"><span>💡 写作提示：</span>' + (task.tips || '') + '</div></div>' +
         '<button class="btn-toggle-answer btn-writing-toggle">显示范文</button></div>'
       );
     }).join('');
     return (
       '<div class="module-block module-writing">' +
-      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
+      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + ' ' + bookTag() + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + tasksHtml + '</div>'
     );
   }
@@ -515,7 +519,7 @@
           '<div class="cue-card"><div class="cue-card-label">Cue Card</div>' +
           '<p>' + part.cueCard.replace(/\n/g, '<br>') + '</p></div>' +
           '<div class="writing-answer" data-hidden="true"><h4>参考回答</h4>' +
-          '<div class="model-answer">' + part.modelAnswer.replace(/\n/g, '<br>') + '</div>' +
+          '<div class="model-answer">' + (part.modelAnswer || '').replace(/\n/g, '<br>') + '</div>' +
           (part.tips ? '<div class="writing-tips"><span>💡 答题提示：</span>' + part.tips + '</div>' : '') + '</div>' +
           '<button class="btn-toggle-answer btn-writing-toggle">显示参考回答</button>';
       } else {
@@ -545,7 +549,7 @@
     }).join('');
     return (
       '<div class="module-block module-speaking">' +
-      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + ' ' + bookTag() + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + partsHtml + '</div>'
     );
   }
@@ -660,6 +664,7 @@
     currentView = { bookId: bookId, testId: testId };
     TTS.stop();
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     if (!book) { renderHome(); return; }
     const test = book.tests.find(function (t) { return t.id === testId; });
     if (!test) { renderBook(bookId); return; }
@@ -724,6 +729,7 @@
 
   // ========== 考试界面渲染 ==========
   // ========== 真题 / 非真题 标识 ==========
+  var CUR_BOOK = null; // 当前渲染的 book，用于决定徽标
   function examTag(real, text) {
     if (real) {
       var rlabel = text || '📝 练习';
@@ -731,9 +737,17 @@
     }
     return '<span class="exam-tag tag-fake" title="雅思练习内容，并非剑桥官方真题">' + (text || '📝 非真题') + '</span>';
   }
+  // 依据当前 book 决定徽标：官方样题 / 练习
+  function bookTag() {
+    if (CUR_BOOK && CUR_BOOK.officialSample) {
+      return '<span class="exam-tag tag-official" title="雅思官方免费发布的真实样题（来源：ielts.org 官方 Sample Tasks）">✅ 官方样题</span>';
+    }
+    return '<span class="exam-tag tag-fake" title="雅思练习内容，并非剑桥官方真题">📝 练习</span>';
+  }
 
   function renderExam(bookId, testId) {
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     const test = book.tests.find(function (t) { return t.id === testId; });
 
     document.title = book.fullTitle + ' ' + test.title + ' [考试中] - 雅思练习库';
@@ -741,7 +755,7 @@
     app.innerHTML =
       '<div class="exam-toolbar">' +
       '<div class="exam-toolbar-left">' +
-      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' + examTag(false, '📝 练习') +
+      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' + bookTag() +
       '</div>' +
       '<div class="exam-toolbar-right">' +
       '<div class="exam-timer" id="exam-timer">02:30:00</div>' +
@@ -806,7 +820,7 @@
     return (
       '<div class="module-block module-listening">' +
       '<div class="module-header"><span class="module-icon">🎧</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
+      '<h2>' + data.title + ' ' + bookTag() + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
       sectionsHtml + '</div>'
     );
   }
@@ -833,7 +847,7 @@
     return (
       '<div class="module-block module-reading">' +
       '<div class="module-header"><span class="module-icon">📖</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + bookTag() + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       passagesHtml + '</div>'
     );
   }
@@ -860,7 +874,7 @@
     return (
       '<div class="module-block module-writing">' +
       '<div class="module-header"><span class="module-icon">✍️</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + bookTag() + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       tasksHtml + '</div>'
     );
   }
@@ -1096,6 +1110,7 @@
     var lTotal = 0, rTotal = 0, wTotal = 0;
     var lAnswered = 0, rAnswered = 0, wAnswered = 0;
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     const test = book.tests.find(function (t) { return t.id === testId; });
 
     test.listening.sections.forEach(function (s, si) {
@@ -1243,6 +1258,7 @@
   // ========== 考试结果页 ==========
   function renderExamResults(bookId, testId) {
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    CUR_BOOK = book;
     const test = book.tests.find(function (t) { return t.id === testId; });
 
     // 评分
@@ -1344,7 +1360,7 @@
     var writeDetailHtml = test.writing.tasks.map(function (task, idx) {
       var userEssay = examState.answers['W-' + idx] || '';
       var wordCount = userEssay.trim().split(/\s+/).filter(function (w) { return w.length > 0; }).length;
-      var modelAnswerHtml = task.modelAnswer.split('\n').map(function (line) {
+      var modelAnswerHtml = (task.modelAnswer || '').split('\n').map(function (line) {
         return line.trim() ? '<p>' + escapeHtml(line) + '</p>' : '';
       }).join('');
       return (
@@ -1357,7 +1373,7 @@
         '<div class="user-essay">' + (userEssay.trim() ? escapeHtml(userEssay).replace(/\n/g, '<br>') : '<p class="empty-essay">未作答</p>') + '</div></div>' +
         '<div class="writing-col"><h4>参考范文</h4>' +
         '<div class="model-answer">' + modelAnswerHtml + '</div>' +
-        '<div class="writing-tips"><span>💡 写作提示：</span>' + task.tips + '</div></div>' +
+        '<div class="writing-tips"><span>💡 写作提示：</span>' + (task.tips || '') + '</div></div>' +
         '</div></div>'
       );
     }).join('');
@@ -1367,7 +1383,7 @@
       var content = '';
       if (part.cueCard) {
         content = '<div class="cue-card"><div class="cue-card-label">Cue Card</div><p>' + part.cueCard.replace(/\n/g, '<br>') + '</p></div>' +
-          '<div class="model-answer visible"><h4>参考回答</h4><div class="model-answer-content">' + part.modelAnswer.replace(/\n/g, '<br>') + '</div></div>';
+          '<div class="model-answer visible"><h4>参考回答</h4><div class="model-answer-content">' + (part.modelAnswer || '').replace(/\n/g, '<br>') + '</div></div>';
       } else {
         content = part.questions.map(function (item, qi) {
           return '<div class="speak-q-item"><div class="speak-q">Q' + (qi + 1) + '. ' + escapeHtml(item.q) + '</div><div class="speak-a">' + escapeHtml(item.a) + '</div></div>';
@@ -2463,7 +2479,7 @@
         return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + examTag(false, '📝 练习') + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + bookTag() + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
         '<div class="speak-detail"><h2>Part 1</h2>' + p1 + '<h2>Part 2 · 话题卡</h2>' + p2 + '<h2>Part 3</h2>' + p3 + '</div>' +
         '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
       var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
@@ -2817,7 +2833,7 @@
     pool.sort(function () { return Math.random() - 0.5; });
     qpQuestions = pool.slice(0, 10); qpPos = 0; qpCorrect = 0;
     app.innerHTML = breadcrumb('快速练习') +
-      '<div class="dash-header"><h1>⚡ 快速练习 ' + examTag(false, '📝 练习') + '</h1><p>从全部练习中随机抽取 10 题，随时自测</p></div>' +
+      '<div class="dash-header"><h1>⚡ 快速练习 ' + bookTag() + '</h1><p>从全部练习中随机抽取 10 题，随时自测</p></div>' +
       '<div class="qp-box" id="qp-box"></div>' +
       '<div style="text-align:center;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
     showQp();
