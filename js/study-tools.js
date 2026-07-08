@@ -200,8 +200,11 @@
   document.addEventListener('click', function (e) {
     // 点击弹窗内部不处理
     if (e.target.closest && e.target.closest('#word-popup')) return;
+    // 存在文本选区时不取词（交给高亮/批注工具处理）
+    var _sel = window.getSelection && window.getSelection();
+    if (_sel && _sel.toString().trim().length) { hidePopup(); return; }
     // 点击交互元素 / 工具面板不取词
-    if (e.target.closest && e.target.closest('button, a, input, textarea, select, .no-word-lookup, #comfort-panel, #comfort-btn, #word-popup')) { hidePopup(); return; }
+    if (e.target.closest && e.target.closest('button, a, input, textarea, select, .no-word-lookup, #comfort-panel, #comfort-btn, #word-popup, #hl-toolbar')) { hidePopup(); return; }
     // 仅在左键单击时取词
     if (e.button !== 0) return;
     var word = null;
@@ -317,12 +320,14 @@
     var app = document.getElementById('app');
     if (!app) return;
     injectReadButtons(app);
+    applyHighlights(app);
     if ('MutationObserver' in window) {
       var mo = new MutationObserver(function (muts) {
         muts.forEach(function (m) {
-          if (m.addedNodes) m.addedNodes.forEach(function (n) { if (n.nodeType === 1) injectReadButtons(n); });
+          if (m.addedNodes) m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { injectReadButtons(n); applyHighlights(n); } });
         });
         injectReadButtons(app);
+        applyHighlights(app);
       });
       mo.observe(app, { childList: true, subtree: true });
     }
@@ -342,10 +347,163 @@
     window.__toastT = setTimeout(function () { t.classList.remove('toast-show'); }, 1800);
   }
 
+  // =================== 4) 阅读高亮与批注 ===================
+  var HKEY = 'ielts_highlights_v1';
+  function getHL() { try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch (e) { return []; } }
+  function setHL(a) { try { localStorage.setItem(HKEY, JSON.stringify(a)); } catch (e) {} }
+  function removeHLByKey(key) { setHL(getHL().filter(function (h) { return h.key !== key; })); }
+
+  function getTextNodes(root) {
+    var out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    while (w.nextNode()) { if (w.currentNode.nodeValue.length) out.push(w.currentNode); }
+    return out;
+  }
+  function buildText(body) {
+    var nodes = getTextNodes(body), str = '', map = [];
+    nodes.forEach(function (n) { map.push(str.length); str += n.nodeValue; });
+    return { str: str, nodes: nodes, map: map };
+  }
+  function globalOffset(body, node, offset) {
+    var nodes = getTextNodes(body), acc = 0;
+    for (var i = 0; i < nodes.length; i++) { if (nodes[i] === node) return acc + offset; acc += nodes[i].nodeValue.length; }
+    return acc;
+  }
+  function countOcc(s, sub) { var c = 0, i = 0; while ((i = s.indexOf(sub, i)) !== -1) { c++; i += sub.length; } return c; }
+  function nthOffset(str, sub, occ) { var c = 0, i = 0; while ((i = str.indexOf(sub, i)) !== -1) { c++; if (c === occ) return i; i += sub.length; } return -1; }
+
+  // 按全局字符偏移把 [start,end) 包进 <mark>，跨文本节点也能正确处理
+  function wrapOffsetRange(body, start, end, color, note) {
+    var t = buildText(body), nodes = t.nodes, acc = 0, segs = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var len = nodes[i].nodeValue.length, ns = acc, ne = acc + len;
+      if (ne <= start) { acc = ne; continue; }
+      if (ns >= end) break;
+      segs.push({ node: nodes[i], s: Math.max(0, start - ns), e: Math.min(len, end - ns) });
+      acc = ne;
+    }
+    for (var j = segs.length - 1; j >= 0; j--) {
+      var r = segs[j], node = r.node;
+      var mid = node.splitText(r.s);
+      var tail = mid.splitText(r.e - r.s);
+      var mark = document.createElement('mark');
+      mark.className = 'hl hl-' + color;
+      mark.dataset.hid = 'h' + Date.now() + Math.random().toString(36).slice(2, 7);
+      if (note) mark.dataset.note = note;
+      mid.parentNode.insertBefore(mark, mid);
+      mark.appendChild(mid);
+    }
+  }
+
+  function passageKey(wrapper) {
+    var section = wrapper.closest ? wrapper.closest('.exam-section') : null;
+    var mod = wrapper.closest ? wrapper.closest('.module-block') : null;
+    var mtitle = mod && mod.querySelector ? (mod.querySelector('.module-header h2') || {}).textContent : '';
+    var ptitle = section && section.querySelector ? (section.querySelector('.passage-title') || {}).textContent : '';
+    return (mtitle || '') + '||' + (ptitle || '');
+  }
+
+  // 在已渲染的篇章上重放保存的高亮（页面切换后调用，每篇仅一次）
+  function applyHighlights(root) {
+    $all('.passage-text-wrapper', root).forEach(function (w) {
+      var body = w.querySelector('.passage-text-body');
+      if (!body || body.dataset.hlApplied) return;
+      body.dataset.hlApplied = '1';
+      var key = passageKey(w);
+      getHL().filter(function (h) { return h.key === key; }).forEach(function (h) {
+        var off = nthOffset(buildText(body).str.toLowerCase(), h.text.toLowerCase(), h.occ);
+        if (off !== -1) wrapOffsetRange(body, off, off + h.text.length, h.color, h.note);
+      });
+    });
+  }
+
+  var _pendingSel = null;
+  function ensureHLToolbar() {
+    if ($('#hl-toolbar')) return;
+    var tb = document.createElement('div');
+    tb.id = 'hl-toolbar'; tb.className = 'hl-hidden';
+    tb.innerHTML =
+      '<button class="hl-sw hl-yellow" data-hl-color="yellow" title="黄色高亮"></button>' +
+      '<button class="hl-sw hl-green" data-hl-color="green" title="绿色高亮"></button>' +
+      '<button class="hl-sw hl-pink" data-hl-color="pink" title="粉色高亮"></button>' +
+      '<button class="hl-note-btn" data-hl-act="note" title="添加批注">📝</button>' +
+      '<button class="hl-clear-btn" data-hl-act="clear" title="清除本文高亮">🧹</button>';
+    document.body.appendChild(tb);
+    tb.addEventListener('click', function (e) {
+      var sw = e.target.closest('[data-hl-color]');
+      var act = e.target.closest('[data-hl-act]');
+      if (sw) { doHighlight(sw.getAttribute('data-hl-color')); hideHLToolbar(); }
+      else if (act) {
+        var a = act.getAttribute('data-hl-act');
+        if (a === 'note') { addNoteToSelection(); hideHLToolbar(); }
+        else if (a === 'clear') { clearCurrentPassage(); hideHLToolbar(); }
+      }
+    });
+  }
+  function hideHLToolbar() { var tb = $('#hl-toolbar'); if (tb) tb.className = 'hl-hidden'; }
+
+  function showHLToolbar(body, start, end, text, rect) {
+    _pendingSel = { body: body, start: start, end: end, text: text };
+    var tb = $('#hl-toolbar'); if (!tb) return;
+    tb.className = 'hl-show';
+    var tw = 230, th = 46;
+    tb.style.left = Math.min(Math.max(8, rect.left + rect.width / 2 - tw / 2), window.innerWidth - tw - 8) + 'px';
+    tb.style.top = Math.min(Math.max(8, rect.bottom + 8), window.innerHeight - th - 8) + 'px';
+  }
+  function curOcc(p) { return countOcc(buildText(p.body).str.toLowerCase().slice(0, p.start).toLowerCase(), p.text.toLowerCase()) + 1; }
+
+  function doHighlight(color) {
+    var p = _pendingSel; if (!p) return;
+    var w = p.body.closest('.passage-text-wrapper'), key = passageKey(w), occ = curOcc(p);
+    var list = getHL().filter(function (h) { return !(h.key === key && h.text.toLowerCase() === p.text.toLowerCase() && h.occ === occ); });
+    wrapOffsetRange(p.body, p.start, p.end, color, '');
+    list.push({ key: key, text: p.text, occ: occ, color: color, note: '' });
+    setHL(list); _pendingSel = null;
+  }
+  function addNoteToSelection() {
+    var p = _pendingSel; if (!p) return;
+    var note = window.prompt('为选中内容添加批注：', '');
+    if (note === null) return;
+    var w = p.body.closest('.passage-text-wrapper'), key = passageKey(w), occ = curOcc(p);
+    var list = getHL().filter(function (h) { return !(h.key === key && h.text.toLowerCase() === p.text.toLowerCase() && h.occ === occ); });
+    wrapOffsetRange(p.body, p.start, p.end, 'yellow', note);
+    list.push({ key: key, text: p.text, occ: occ, color: 'yellow', note: note });
+    setHL(list); _pendingSel = null;
+  }
+  function clearCurrentPassage() {
+    var p = _pendingSel; if (!p) return;
+    var w = p.body.closest('.passage-text-wrapper'), key = passageKey(w);
+    $all('.hl', p.body).forEach(function (m) {
+      var parent = m.parentNode;
+      while (m.firstChild) parent.insertBefore(m.firstChild, m);
+      parent.removeChild(m); parent.normalize();
+    });
+    removeHLByKey(key); _pendingSel = null;
+  }
+
+  document.addEventListener('mouseup', function () {
+    setTimeout(function () {
+      var sel = window.getSelection && window.getSelection();
+      if (!sel || !sel.rangeCount) { hideHLToolbar(); return; }
+      var text = sel.toString();
+      if (!text || text.indexOf('\n') !== -1) { hideHLToolbar(); return; }
+      var range = sel.getRangeAt(0);
+      var sc = range.startContainer, ec = range.endContainer;
+      var body = (sc.nodeType === 3 ? sc.parentNode : sc).closest ? (sc.nodeType === 3 ? sc.parentNode : sc).closest('.passage-text-body') : null;
+      var endBody = (ec.nodeType === 3 ? ec.parentNode : ec).closest ? (ec.nodeType === 3 ? ec.parentNode : ec).closest('.passage-text-body') : null;
+      if (!body || body !== endBody) { hideHLToolbar(); return; }
+      var start = globalOffset(body, sc, range.startOffset);
+      var end = globalOffset(body, ec, range.endOffset);
+      if (end - start !== text.length) { hideHLToolbar(); return; }
+      showHLToolbar(body, start, end, text, range.getBoundingClientRect());
+    }, 10);
+  });
+  window.addEventListener('scroll', hideHLToolbar, true);
+
   // ---------- 启动 ----------
   function init() {
     applyComfort();
     ensureComfortBtn();
+    ensureHLToolbar();
     observeApp();
   }
   if (document.readyState === 'loading') {
