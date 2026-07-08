@@ -1,12 +1,12 @@
 /**
- * 剑16 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思16 真题（Test 1 与 Test 2）。
+ * 剑16 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思16 练习题目（Test 1 与 Test 2）。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — laokaoya (剑桥雅思16 Test1/Test2 Part1-4)、ielts-hub、ieltsxpress (transcript)
  *   阅读原文/题目/答案 — engnovate (Cambridge IELTS 16 Academic Reading Test 1 & Test 2 全文)、ielts-hub、ieltsextremes
  *   写作题目 — engnovate / ieltswriting.org (Cambridge IELTS 16 Academic Writing Test 1 & Test 2 原题)
  *   口语话题 — ieltspractices.com、babarenglish.com、ieltszone.org (Cambridge 16 IELTS Speaking Test 1/2)
- * 注意：原文/题目为真实剑桥雅思16考题内容；范文与口语"参考回答"为学习用示例文本（非官方范文）。
+ * 注意：原文/题目为剑桥雅思16考题内容；范文与口语"参考回答"为学习用示例文本（非官方范文）。
  * 校订记录：经与权威来源逐题核对，原补丁的写作模块存在跨题错配（T1T2 误用 driverless、
  *   T2T1 误用 airport、T2T2 误用 local-history），已替换为剑桥16真实写作题目
  *   （T1T2=居住房屋历史；T2T1=甘蔗制糖流程图；T2T2=广告强调"新"产品）。
@@ -470,7 +470,7 @@ Stoicism has also become popular in the world of business. Stoic principles can 
 
 I would argue that studying Stoicism is as relevant today as it was 2,000 years ago, thanks to its brilliant insights into how to lead a good life. At the very root of the thinking, there is a very simple way of living – control what you can and accept what you can't. This is not as easy as it sounds and will require considerable practice. The Stoics also believed the most important foundation for a good and happy life is not money, fame, power or pleasure, but having a disciplined and principled character – something which seems to resonate with many people today.`;
 
-      console.log('[real-16a] 剑16 Test1 已覆盖为真实剑桥雅思内容');
+      console.log('[real-16a] 剑16 Test1 已覆盖为练习题目（待与原版书核对）');
     }
   }
 
@@ -926,7 +926,7 @@ A study in the American Journal of Health Behavior showed that when women with o
 
 Dance is never going to compete with high-intensity workouts when it comes to physical fitness gains, but its popularity is likely to keep on rising because it's such a fun way to keep fit.`;
 
-      console.log('[real-16a] 剑16 Test2 已覆盖为真实剑桥雅思内容');
+      console.log('[real-16a] 剑16 Test2 已覆盖为练习题目（待与原版书核对）');
     }
   }
 })();
