@@ -1,6 +1,6 @@
 /**
- * 剑12 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js（含 data-extra*.js）中 AI 生成的"原创练习"内容替换为真实剑桥雅思12 Test 1、Test 2 真题。
+ * 剑12 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js（含 data-extra*.js）中 AI 生成的"原创练习"内容替换为剑桥雅思12 Test 1、Test 2 练习题目。
  *
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ielts-hub (Cambridge IELTS 12 Test 01/02 Transcript)、luckyielts (完整答案键)、
@@ -12,7 +12,7 @@
  *   口语话题 — ieltspractices.com (Cambridge 12 IELTS Speaking Test 1 & 2)
  *
  * 注意：
- *   - 原文/题目为真实考题内容（转载自上述公开解析站，已交叉核对答案键）。
+ *   - 原文/题目为真实考题内容（转载自上述公开解析站，待与原版书核对答案键）。
  *   - 范文与口语"参考回答"为学习用示例文本（非官方范文），仅供参考。
  *   - 部分旧版书籍（如剑12）个别题目在第三方站点存在"Test 编号"标注不一致的情况，本文件已按官方书内结构核对
  *     （Test 1 阅读 = Cork / Collecting as a Hobby / What's the purpose of gaining knowledge?；
@@ -926,5 +926,5 @@ Now I'll say a little about dealing with the type of conflict that has harmful e
 Sometimes, of course, conflict does occur, and can get out of hand. In such cases the human resources department often gets involved. However, if one of the parties in a conflict sees human resources as simply a mouthpiece for the chief executive, then an external mediator might be able to help (Q40). By talking to both sides, and trying to find the truth of what's been happening, they can build a clear picture of the situation, and give feedback that both sides will accept, precisely because they're independent.`;
   }
 
-  console.log('[real-12] 剑12 Test 1 & Test 2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-12] 剑12 Test 1 & Test 2 已覆盖为练习题目（待与原版书核对）');
 })();
