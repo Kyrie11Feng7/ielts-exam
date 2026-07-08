@@ -1,6 +1,6 @@
 /**
- * 剑15 Test 3、Test 4 真实剑桥雅思内容覆盖补丁
- * 目的：将 data-extra3-1.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思15 Test 3、Test 4 真题。
+ * 剑15 Test 3、Test 4 剑桥雅思内容覆盖补丁
+ * 目的：将 data-extra3-1.js 中 AI 生成的"原创练习"内容替换为剑桥雅思15 Test 3、Test 4 练习题目。
  *
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ieltstrainingonline (Audio-script / Practice Cam 15 Listening Test 3 & 4)
@@ -10,7 +10,7 @@
  *   口语话题 — ieltspracticeonline / babarenglish / engnovate (Cambridge 15 Speaking Test 3 & 4)
  *
  * 注意：
- *   - 原文（听力脚本、阅读篇章）、题目与答案键为真实剑桥雅思考题内容（版权属 Cambridge University Press）。
+ *   - 原文（听力脚本、阅读篇章）、题目与答案键为剑桥雅思考题内容（版权属 Cambridge University Press）。
  *   - 写作 modelAnswer 与口语 "参考回答" 均为学习用示例文本（非官方范文），仅供参考。
  * 本文件须放在所有数据文件（data.js / data-extra*.js / reading-passages*.js / listening-scripts*.js）之后、app.js 之前加载。
  */
@@ -540,7 +540,7 @@ Until the 19th century, soap was regarded as a luxury item, and was heavily taxe
 
 With this widespread use came the development of milder soaps for bathing and soaps for use in the washing machines that were available to consumers by the turn of the 20th century.`;
     }
-    console.log('[real-15b] 剑15 Test3 已覆盖为真实剑桥雅思内容');
+    console.log('[real-15b] 剑15 Test3 已覆盖为练习题目（待与原版书核对）');
   })();
 
   // ======================================================================
@@ -1044,6 +1044,6 @@ The third main area that saw changes that contributed to consumerism was retaili
 
 Flanders claims that one of the great effects of the Industrial Revolution was that it created choice. All sorts of things that had previously been luxuries – from sugar to cutlery – became conveniences, and before long they'd turned into necessities: life without sugar or cutlery was unimaginable. Rather like mobile phones these days!`;
     }
-    console.log('[real-15b] 剑15 Test4 已覆盖为真实剑桥雅思内容');
+    console.log('[real-15b] 剑15 Test4 已覆盖为练习题目（待与原版书核对）');
   })();
 })();
