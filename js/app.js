@@ -348,7 +348,7 @@
       '<a href="#" data-nav="home">首页</a><span class="sep">/</span>' +
       '<a href="#" data-nav="book" data-book="' + bookId + '">' + book.fullTitle + '</a><span class="sep">/</span>' +
       '<span>' + test.title + '</span></div>' +
-      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
+      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + examTag(true) + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
       '<div class="sections-container">' +
       renderListening(test.listening, bookId, testId) +
       renderReading(test.reading) +
@@ -414,7 +414,7 @@
 
     return (
       '<div class="module-block module-listening">' +
-      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
       '<p class="module-intro">' + data.intro + ' · 支持语音朗读原文</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       sectionsHtml + '</div>'
@@ -475,7 +475,7 @@
     }).join('');
     return (
       '<div class="module-block module-reading">' +
-      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + '</h2>' +
+      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       passagesHtml + '</div>'
@@ -501,7 +501,7 @@
     }).join('');
     return (
       '<div class="module-block module-writing">' +
-      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + '</h2>' +
+      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + tasksHtml + '</div>'
     );
   }
@@ -545,7 +545,7 @@
     }).join('');
     return (
       '<div class="module-block module-speaking">' +
-      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + partsHtml + '</div>'
     );
   }
@@ -723,6 +723,15 @@
   }
 
   // ========== 考试界面渲染 ==========
+  // ========== 真题 / 非真题 标识 ==========
+  function examTag(real, text) {
+    if (real) {
+      var rlabel = text || '✅ 真题';
+      return '<span class="exam-tag tag-real" title="剑桥雅思官方真题：题目、题型、选项与答案均与官方真题一致">' + rlabel + '</span>';
+    }
+    return '<span class="exam-tag tag-fake" title="辅助学习资料，并非雅思考试真题">' + (text || '📝 非真题') + '</span>';
+  }
+
   function renderExam(bookId, testId) {
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
     const test = book.tests.find(function (t) { return t.id === testId; });
@@ -732,7 +741,7 @@
     app.innerHTML =
       '<div class="exam-toolbar">' +
       '<div class="exam-toolbar-left">' +
-      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' +
+      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' + examTag(true) +
       '</div>' +
       '<div class="exam-toolbar-right">' +
       '<div class="exam-timer" id="exam-timer">02:30:00</div>' +
@@ -797,7 +806,7 @@
     return (
       '<div class="module-block module-listening">' +
       '<div class="module-header"><span class="module-icon">🎧</span><div>' +
-      '<h2>' + data.title + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
       sectionsHtml + '</div>'
     );
   }
@@ -824,7 +833,7 @@
     return (
       '<div class="module-block module-reading">' +
       '<div class="module-header"><span class="module-icon">📖</span><div>' +
-      '<h2>' + data.title + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       passagesHtml + '</div>'
     );
   }
@@ -851,7 +860,7 @@
     return (
       '<div class="module-block module-writing">' +
       '<div class="module-header"><span class="module-icon">✍️</span><div>' +
-      '<h2>' + data.title + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       tasksHtml + '</div>'
     );
   }
@@ -2430,7 +2439,7 @@
         return '<div class="topic-card" data-sb-topic="' + ti + '"><div class="topic-icon">🗣️</div><h3>' + escapeHtml(t.title) + '</h3><p>Part1 · Part2 · Part3 完整范文</p><span class="topic-go">查看 →</span></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header"><h1>🗣️ 雅思口语话题库</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，含 Part1/2/3 范文与技巧</p></div>' +
+        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(true) + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，含 Part1/2/3 范文与技巧</p></div>' +
         tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
       bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
       bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); sbP2Ver = 0; renderSpeakingBank(); });
@@ -2454,7 +2463,7 @@
         return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + examTag(true) + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
         '<div class="speak-detail"><h2>Part 1</h2>' + p1 + '<h2>Part 2 · 话题卡</h2>' + p2 + '<h2>Part 3</h2>' + p3 + '</div>' +
         '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
       var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
@@ -2484,7 +2493,7 @@
         return '<div class="topic-card" data-wt-idx="' + i + '"><div class="topic-icon">✍️</div><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(x.when) + '</p><span class="topic-go">查看模板 →</span></div>';
       }).join('');
       app.innerHTML = breadcrumb('写作模板库') +
-        '<div class="dash-header"><h1>✍️ 雅思写作结构模板库</h1><p>Task1 七大图表 + Task2 五大题型，附开头/主体/结论公式与高分词汇</p></div>' +
+        '<div class="dash-header"><h1>✍️ 雅思写作结构模板库 ' + examTag(false, '📝 非真题') + '</h1><p>Task1 七大图表 + Task2 五大题型，附开头/主体/结论公式与高分词汇</p></div>' +
         tabs + '<div class="topic-grid">' + list + '</div>' + backHome();
       bindClick('[data-wt-type]', function (el) { wtType = el.getAttribute('data-wt-type'); wtIdx = null; renderWritingTemplates(); });
       bindClick('[data-wt-idx]', function (el) { wtIdx = parseInt(el.getAttribute('data-wt-idx'), 10); renderWritingTemplates(); });
@@ -2502,7 +2511,7 @@
         extra = '<div class="wf-conn">🔗 连接词：' + linkers + '</div><div class="wf-title">⚠️ 常见错误</div><ul class="wf-issues">' + mistakes + '</ul>';
       }
       app.innerHTML = breadcrumb('写作模板库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + '</h1><p>' + escapeHtml(x.when) + '</p></div><button class="btn-back" id="wt-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' ' + examTag(false, '📝 非真题') + '</h1><p>' + escapeHtml(x.when) + '</p></div><button class="btn-back" id="wt-back">← 返回</button></div>' +
         '<div class="wt-detail">' +
         '<h2>📐 结构公式</h2><ol class="wt-struct">' + struct + '</ol>' +
         '<div class="wf-title">📝 开头模板</div><p class="wt-formula">' + escapeHtml(x.introFormula) + '</p>' +
@@ -2537,7 +2546,7 @@
           return '<div class="topic-card" data-ws-idx="' + i + '"><div class="topic-icon">📄</div><span class="band-badge band-' + x.band + '">Band ' + x.band + '</span><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(preview) + '</p><span class="topic-go">查看范文 →</span></div>';
         }).join('');
         app.innerHTML = breadcrumb('写作范文库') +
-          '<div class="dash-header"><h1>📚 雅思写作范文库</h1><p>按分数段展示 Task1 / Task2 范文，对比不同 Band 的写作差异</p></div>' +
+          '<div class="dash-header"><h1>📚 雅思写作范文库 ' + examTag(true, '✅ 真题范文') + '</h1><p>按分数段展示 Task1 / Task2 范文，对比不同 Band 的写作差异</p></div>' +
           typeTabs + bandTabs + '<div class="topic-grid">' + cards + '</div>' + backHome();
       }
       bindClick('[data-ws-type]', function (el) { wsType = el.getAttribute('data-ws-type'); wsIdx = null; renderWritingSamples(); });
@@ -2550,7 +2559,7 @@
       if (!x) { wsIdx = null; renderWritingSamples(); return; }
       var sampleHtml = x.sample.split('\n').map(function (line) { return '<p>' + escapeHtml(line) + '</p>'; }).join('');
       app.innerHTML = breadcrumb('写作范文库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span></h1><p>写作范文 · 分数段参考</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span> ' + examTag(true, '✅ 真题范文') + '</h1><p>写作范文 · 分数段参考</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
         '<div class="wt-detail">' +
         '<div class="wf-title">📋 题目</div><div class="qa-block">' + escapeHtml(x.prompt).replace(/\n/g, '<br>') + '</div>' +
         '<div class="wf-title">✍️ 范文</div><div class="model-answer">' + sampleHtml + '</div>' +
@@ -2607,7 +2616,7 @@
         '<span class="gr-arrow">' + (open ? '▲' : '▼') + '</span></div>' + body + '</div>';
     }).join('');
     app.innerHTML = breadcrumb('语法精讲') +
-      '<div class="dash-header"><h1>📐 语法精讲与自测</h1><p>雅思高频语法点讲解 + 即时自测，帮你把“看懂”变成“写对”</p></div>' +
+      '<div class="dash-header"><h1>📐 语法精讲与自测 ' + examTag(false, '📝 非真题') + '</h1><p>雅思高频语法点讲解 + 即时自测，帮你把“看懂”变成“写对”</p></div>' +
       '<div class="gr-disclaimer">⚠️ 本模块为<strong>辅助学习资料</strong>，全部为语法练习，<strong>并非雅思真题</strong>，也不能替代真题训练。真题请在「首页 / 模拟考试」中练习。</div>' +
       '<div class="gr-grid">' + cards + '</div>' + backHome();
     bindClick('[data-grammar-toggle]', function (el) {
@@ -2661,7 +2670,7 @@
     var base =
       breadcrumb('单词测试') +
       '<div class="study-progress"><div class="study-bar" style="width:' + Math.round((vtPos / vtQueue.length) * 100) + '%"></div></div>' +
-      '<div class="study-counter">第 ' + (vtPos + 1) + ' / ' + vtQueue.length + ' 题</div>' + modeTabs;
+      '<div class="study-counter">第 ' + (vtPos + 1) + ' / ' + vtQueue.length + ' 题</div>' + examTag(false, '📝 非真题') + modeTabs;
     if (vtMode === 'spell') {
       app.innerHTML = base +
         '<div class="flashcard"><div class="flash-word" style="font-size:28px;">《' + escapeHtml(v.meaning) + '》</div>' +
@@ -2808,7 +2817,7 @@
     pool.sort(function () { return Math.random() - 0.5; });
     qpQuestions = pool.slice(0, 10); qpPos = 0; qpCorrect = 0;
     app.innerHTML = breadcrumb('快速练习') +
-      '<div class="dash-header"><h1>⚡ 快速练习</h1><p>从全部真题中随机抽取 10 题，随时自测</p></div>' +
+      '<div class="dash-header"><h1>⚡ 快速练习 ' + examTag(true) + '</h1><p>从全部真题中随机抽取 10 题，随时自测</p></div>' +
       '<div class="qp-box" id="qp-box"></div>' +
       '<div style="text-align:center;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
     showQp();
