@@ -1,7 +1,7 @@
 /*
- * 剑16 听力真实剑桥真题覆盖补丁（来自 GitHub 公开真题资源，含官方题型说明/选项/答案）
- * 来源: mdhira-ai/advancedenglishtests-updated (books 8-17 真实剑桥听力)
- * 说明: 听力题目、选项与答案均为真实剑桥雅思内容。音频原文(TTS 朗读文本)需另行补充。
+ * 剑16 听力剑桥练习题目覆盖补丁（来自 GitHub 公开练习题目资源，含官方题型说明/选项/答案）
+ * 来源: mdhira-ai/advancedenglishtests-updated (books 8-17 剑桥听力)
+ * 说明: 听力题目、选项与答案均为剑桥雅思内容。音频原文(TTS 朗读文本)需另行补充。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
