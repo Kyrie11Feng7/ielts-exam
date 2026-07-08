@@ -1,12 +1,12 @@
 /**
- * 剑19 Test 2 / 3 / 4 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思19 Test 2/3/4 真题。
+ * 剑19 Test 2 / 3 / 4 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思19 Test 2/3/4 练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ieltsxpress (Cambridge IELTS 19 Listening Test 2/3/4 with answers & audio transcript)
  *   阅读原文/题目/答案 — engnovate (Cambridge IELTS 19 Academic Reading Test 2/3/4)；ielts-hub (Test 2 P1)
  *   写作题目 — howtodoielts / TED IELTS (Cambridge IELTS 19 各 Test 写作题)；engnovate (Test 2/4 Task 1)
  *   口语话题 — ieltspractices.com (Cambridge 19 IELTS Speaking Test 2/3/4)
- * 注意：原文/题目/听力原文为真实剑桥雅思19真题内容；范文与口语"参考回答"为学习用示例文本（非官方范文）。
+ * 注意：原文/题目/听力原文为剑桥雅思19练习题目内容；范文与口语"参考回答"为学习用示例文本（非官方范文）。
  * 答案键已与 engnovate / ieltsxpress 等至少一处来源交叉核对。
  * 本文件须放在所有数据文件（data.js, data-extra*.js, listening-scripts.js 等）之后、app.js 之前加载。
  */
@@ -1449,5 +1449,5 @@ The restoration of mangrove forests in Madagascar is an example of a project whi
 One other important point to consider …`;
   }
 
-  console.log('[real-19b] 剑19 Test 2/3/4 已覆盖为真实剑桥雅思内容');
+  console.log('[real-19b] 剑19 Test 2/3/4 已覆盖为练习题目（待与原版书核对）');
 })();
