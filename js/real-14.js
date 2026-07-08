@@ -1,6 +1,6 @@
 /**
- * 剑14 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为真实剑桥雅思14（Cambridge IELTS 14, Academic）真题。
+ * 剑14 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data.js 中 AI 生成的"原创练习"内容替换为剑桥雅思14（Cambridge IELTS 14, Academic）练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案/题目 — laokaoya（剑桥雅思14 Test1/Test2 Section1-4 听力原文与答案）
  *   阅读原文/题目/答案 — engnovate（Cambridge IELTS 14 Academic Reading Test 1 / Test 2 全文与题解）
@@ -993,5 +993,5 @@ In addition to new meteorological instruments, other developments contributed to
 It was not until the early twentieth century that mathematics and physics became part of meteorology, and we’ll continue from that point next week.`;
   }
 
-  console.log('[real-14] 剑14 Test1 & Test2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-14] 剑14 Test1 & Test2 已覆盖为练习题目（待与原版书核对）');
 })();
