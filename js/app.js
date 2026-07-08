@@ -245,7 +245,7 @@
       '<div class="section-header"><h2>' + (currentMode === 'exam' ? '考试功能' : '备考功能') + '</h2></div>' +
       featuresHtml +
       '</section>' +
-      '<footer class="footer"><p>雅思真题库 · 仅供学习参考使用 · 题目为雅思格式原创练习内容</p></footer>';
+      '<footer class="footer"><p>雅思真题库 · 仅供学习参考使用 · 听力/阅读/写作/口语题目来自剑桥雅思官方真题，范文与语法等为辅助参考资料</p></footer>';
 
     // 绑定模式切换
     document.querySelectorAll('.mode-btn').forEach(function (btn) {
@@ -727,7 +727,7 @@
   function examTag(real, text) {
     if (real) {
       var rlabel = text || '✅ 真题';
-      return '<span class="exam-tag tag-real" title="剑桥雅思官方真题：题目、题型、选项与答案均与官方真题一致">' + rlabel + '</span>';
+      return '<span class="exam-tag tag-real" title="题目与题型来自剑桥雅思官方真题">' + rlabel + '</span>';
     }
     return '<span class="exam-tag tag-fake" title="辅助学习资料，并非雅思考试真题">' + (text || '📝 非真题') + '</span>';
   }
@@ -2439,7 +2439,7 @@
         return '<div class="topic-card" data-sb-topic="' + ti + '"><div class="topic-icon">🗣️</div><h3>' + escapeHtml(t.title) + '</h3><p>Part1 · Part2 · Part3 完整范文</p><span class="topic-go">查看 →</span></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(true) + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，含 Part1/2/3 范文与技巧</p></div>' +
+        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(true, '✅ 真题话题') + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，话题与问题来自雅思口语真题，示范回答为参考示例</p></div>' +
         tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
       bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
       bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); sbP2Ver = 0; renderSpeakingBank(); });
@@ -2546,7 +2546,7 @@
           return '<div class="topic-card" data-ws-idx="' + i + '"><div class="topic-icon">📄</div><span class="band-badge band-' + x.band + '">Band ' + x.band + '</span><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(preview) + '</p><span class="topic-go">查看范文 →</span></div>';
         }).join('');
         app.innerHTML = breadcrumb('写作范文库') +
-          '<div class="dash-header"><h1>📚 雅思写作范文库 ' + examTag(true, '✅ 真题范文') + '</h1><p>按分数段展示 Task1 / Task2 范文，对比不同 Band 的写作差异</p></div>' +
+          '<div class="dash-header"><h1>📚 雅思写作范文库 ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思真题题型，范文与解析为高分参考示例（非官方发布）</p></div>' +
           typeTabs + bandTabs + '<div class="topic-grid">' + cards + '</div>' + backHome();
       }
       bindClick('[data-ws-type]', function (el) { wsType = el.getAttribute('data-ws-type'); wsIdx = null; renderWritingSamples(); });
@@ -2559,7 +2559,7 @@
       if (!x) { wsIdx = null; renderWritingSamples(); return; }
       var sampleHtml = x.sample.split('\n').map(function (line) { return '<p>' + escapeHtml(line) + '</p>'; }).join('');
       app.innerHTML = breadcrumb('写作范文库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span> ' + examTag(true, '✅ 真题范文') + '</h1><p>写作范文 · 分数段参考</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span> ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思真题题型 · 范文为参考示例</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
         '<div class="wt-detail">' +
         '<div class="wf-title">📋 题目</div><div class="qa-block">' + escapeHtml(x.prompt).replace(/\n/g, '<br>') + '</div>' +
         '<div class="wf-title">✍️ 范文</div><div class="model-answer">' + sampleHtml + '</div>' +
