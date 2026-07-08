@@ -2705,3 +2705,106 @@ body {
 [data-theme="dark"] .band-badge.band-8 { color: #93c5fd; }
 .wt-detail .qa-block { color: var(--color-text-light); line-height: 1.6; }
 .model-answer p { margin: 0 0 10px; line-height: 1.8; color: var(--color-text); }
+
+/* ============================================================
+   学习助手（study-tools.js）：划词查词 / 阅读舒适化 / 文章朗读
+   ============================================================ */
+#app {
+  --reading-font-size: 16px;
+  --reading-line-height: 1.9;
+}
+.passage-text-body,
+.passage-text-body p,
+.question-text,
+.writing-prompt p,
+.cue-card,
+.model-answer,
+.exam-reading .passage-text-body,
+.passage-summary {
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+}
+.passage-text-body { transition: background .2s, color .2s; }
+
+/* 阅读主题：护眼 / 夜间（作用于篇章正文） */
+[data-reading-theme="sepia"] .passage-text-body,
+[data-reading-theme="sepia"] .exam-reading .passage-text-body {
+  background: #f7efdd; color: #5b4636; border-color: #e3d4b3;
+}
+[data-reading-theme="sepia"] .passage-text-body ::selection { background: #ecd9a8; }
+[data-reading-theme="night"] .passage-text-body,
+[data-reading-theme="night"] .exam-reading .passage-text-body {
+  background: #0f172a; color: #cbd5e1;
+}
+
+/* 划词查词弹窗 */
+#word-popup {
+  position: fixed; z-index: 9999; width: 320px; max-width: 92vw;
+  background: var(--color-surface, #fff); color: var(--color-text, #1f2937);
+  border: 1px solid var(--color-border, #e2e8f0); border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.18);
+  padding: 12px 14px; font-size: 14px; line-height: 1.55;
+}
+#word-popup.wp-hidden { display: none; }
+#word-popup .wp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+#word-popup .wp-word { font-size: 18px; font-weight: 700; color: var(--color-primary, #1e3a5f); flex: 1; word-break: break-all; }
+#word-popup .wp-speak, #word-popup .wp-close {
+  border: none; background: #eef2f7; border-radius: 8px; cursor: pointer;
+  width: 30px; height: 30px; font-size: 15px; line-height: 1;
+}
+#word-popup .wp-speak:hover, #word-popup .wp-close:hover { background: #dbe4ee; }
+#word-popup .wp-ph { color: var(--color-text-light, #64748b); font-style: italic; margin-bottom: 6px; }
+#word-popup .wp-body { max-height: 220px; overflow-y: auto; margin-bottom: 10px; }
+#word-popup .wp-loading, #word-popup .wp-muted { color: var(--color-text-light, #64748b); }
+#word-popup .wp-cn { font-size: 15px; color: var(--color-text, #1f2937); margin-bottom: 6px; }
+#word-popup .wp-en { margin-bottom: 6px; }
+#word-popup .wp-tag { display: inline-block; background: #e0f2fe; color: #0369a1; border-radius: 5px; padding: 0 5px; font-size: 11px; margin-right: 4px; }
+#word-popup .wp-ex { color: var(--color-text-light, #64748b); font-style: italic; border-left: 3px solid #cbd5e1; padding-left: 8px; }
+#word-popup .wp-actions { display: flex; }
+#word-popup .wp-add {
+  flex: 1; border: none; border-radius: 9px; cursor: pointer; padding: 8px 10px;
+  background: var(--color-primary, #1e3a5f); color: #fff; font-size: 14px; font-weight: 600;
+}
+#word-popup .wp-add:hover { filter: brightness(1.08); }
+#word-popup .wp-add:disabled { background: #94a3b8; cursor: default; }
+
+/* 阅读舒适化按钮 + 面板 */
+.float-btn {
+  position: fixed; right: 18px; bottom: 78px; z-index: 900;
+  width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--color-primary, #1e3a5f); color: #fff; font-size: 18px; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.float-btn:hover { filter: brightness(1.1); }
+#comfort-panel {
+  position: fixed; right: 18px; bottom: 134px; z-index: 901; width: 260px;
+  background: var(--color-surface, #fff); color: var(--color-text, #1f2937);
+  border: 1px solid var(--color-border, #e2e8f0); border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 14px 16px; font-size: 14px;
+}
+#comfort-panel.cf-hidden { display: none; }
+#comfort-panel .cf-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+#comfort-panel .cf-row { margin-bottom: 12px; }
+#comfort-panel .cf-row label { display: block; margin-bottom: 5px; color: var(--color-text-light, #64748b); }
+#comfort-panel input[type="range"] { width: 100%; accent-color: var(--color-primary, #1e3a5f); }
+#comfort-panel .cf-themes { display: flex; gap: 6px; }
+#comfort-panel .cf-theme {
+  flex: 1; border: 1px solid var(--color-border, #e2e8f0); background: #f1f5f9; border-radius: 8px;
+  padding: 6px 0; cursor: pointer; font-size: 13px; color: var(--color-text, #1f2937);
+}
+#comfort-panel .cf-theme.active { background: var(--color-primary, #1e3a5f); color: #fff; border-color: var(--color-primary, #1e3a5f); }
+#comfort-panel .cf-tip { font-size: 12px; color: var(--color-text-light, #64748b); margin-top: 4px; }
+
+/* 文章朗读按钮 */
+.btn-passage-tts {
+  border: 1px solid var(--color-border, #e2e8f0); background: #eef2f7; color: var(--color-text, #1f2937);
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 13px; margin-right: 8px;
+}
+.btn-passage-tts:hover { background: #dbe4ee; }
+[data-reading-theme="sepia"] .btn-passage-tts { background: #efe2c4; border-color: #d8c49a; }
+[data-reading-theme="night"] .btn-passage-tts { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+
+@media (max-width: 600px) {
+  #word-popup { width: 92vw; }
+  #comfort-panel { right: 10px; width: 220px; }
+}
