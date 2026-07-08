@@ -1,6 +1,6 @@
 /**
- * 剑15 Test 1 & Test 2 真实剑桥雅思内容覆盖补丁
- * 目的：将 data-extra / data-extra2 中 AI 生成的"原创练习"内容替换为真实剑桥雅思15 Test 1、Test 2 真题。
+ * 剑15 Test 1 & Test 2 剑桥雅思内容覆盖补丁
+ * 目的：将 data-extra / data-extra2 中 AI 生成的"原创练习"内容替换为剑桥雅思15 Test 1、Test 2 练习题目。
  * 数据核对来源（公开权威解析，含原题答案键）：
  *   听力原文/答案 — ieltstrainingonline (Cambridge IELTS 15 Listening Test 1 / Test 2 题目、答案与录音稿)
  *   阅读原文/题目/答案 — ieltstrainingonline / ieltsworldly (Cambridge IELTS 15 Reading Test 1 / Test 2 全文+题目+答案)
@@ -856,5 +856,5 @@ SPEAKER: So what lessons can be learned from this programme? First of all, it te
 SPEAKER: The programme demonstrates that sustainable development is possible in areas where …`;
   }
 
-  console.log('[real-15a] 剑15 Test1 & Test2 已覆盖为真实剑桥雅思内容');
+  console.log('[real-15a] 剑15 Test1 & Test2 已覆盖为练习题目（待与原版书核对）');
 })();
