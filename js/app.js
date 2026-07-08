@@ -1447,7 +1447,7 @@
   // ========== 个人学习数据 (localStorage) ==========
   // ==========================================
   const Store = {
-    keys: { progress: 'ielts_progress_v1', wrong: 'ielts_wrong_v1', fav: 'ielts_fav_v1', vocab: 'ielts_vocab_v1', theme: 'ielts_theme_v1', community: 'ielts_community_v1', feedback: 'ielts_feedback_v1', examDate: 'ielts_examdate_v1' },
+    keys: { progress: 'ielts_progress_v1', wrong: 'ielts_wrong_v1', fav: 'ielts_fav_v1', vocab: 'ielts_vocab_v1', theme: 'ielts_theme_v1', community: 'ielts_community_v1', feedback: 'ielts_feedback_v1', examDate: 'ielts_examdate_v1', plan: 'ielts_plan_v1' },
     _read: function (k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
     _write: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
     getProgress: function () { return this._read(this.keys.progress, {}); },
@@ -1464,6 +1464,8 @@
     setFeedback: function (v) { this._write(this.keys.feedback, v); },
     getExamDate: function () { return this._read(this.keys.examDate, ''); },
     setExamDate: function (d) { this._write(this.keys.examDate, d); },
+    getPlan: function () { return this._read(this.keys.plan, { goal: 1, unit: 'test', remind: false }); },
+    setPlan: function (p) { this._write(this.keys.plan, p); },
     getTheme: function () { return this._read(this.keys.theme, 'light'); },
     setTheme: function (t) { this._write(this.keys.theme, t); }
   };
@@ -1570,6 +1572,7 @@
     else if (page === 'vocab-test') renderVocabTest();
     else if (page === 'community') renderCommunity();
     else if (page === 'quick') renderQuickPractice();
+    else if (page === 'grammar') renderGrammar();
   }
 
   // 全局委托点击：页面导航 / 收藏 / 错题重做
@@ -1733,6 +1736,7 @@
       '<div class="tool-card" data-nav-page="community"><div class="tool-icon">🌐</div><h3>学习社区</h3></div>' +
       '<div class="tool-card" data-nav-page="vocab-test"><div class="tool-icon">📝</div><h3>单词测试</h3></div>' +
       '<div class="tool-card" data-nav-page="vocab"><div class="tool-icon">🔤</div><h3>生词背诵</h3></div>' +
+      '<div class="tool-card" data-nav-page="grammar"><div class="tool-icon">📐</div><h3>语法精讲</h3></div>' +
       '</div></div>';
 
     var statCards =
@@ -1745,15 +1749,72 @@
       '<div class="dash-stat"><div class="ds-num">' + avgOverall + '</div><div class="ds-label">平均总分</div></div>' +
       '</div>';
 
+    // ---- 学习计划（每日目标）+ 浏览器提醒 ----
+    var plan = Store.getPlan();
+    var todayKey = todayStr();
+    var todayCount = 0;
+    keys.forEach(function (k) { (prog[k].history || []).forEach(function (h) { if (h.date === todayKey) todayCount++; }); });
+    var goalPct = plan.goal > 0 ? Math.min(100, Math.round((todayCount / plan.goal) * 100)) : 0;
+    var goalMet = todayCount >= plan.goal;
+    var planHtml = '<div class="dash-section"><h2>🎯 学习计划（每日目标）</h2>' +
+      '<div class="plan-card">' +
+        '<div class="plan-goal">' +
+          '<div class="plan-ring" style="--p:' + goalPct + '"><span>' + todayCount + '/' + plan.goal + '</span></div>' +
+          '<div class="plan-info"><div class="plan-label">今日已完成</div>' +
+          '<div class="plan-sub">' + (goalMet ? '🎉 今日目标已达成！' : '还差 <b>' + (plan.goal - todayCount) + '</b> 套达成今日目标') + '</div></div>' +
+        '</div>' +
+        '<div class="plan-set"><label>每日目标</label>' +
+        '<input type="number" id="plan-goal" min="1" max="10" value="' + plan.goal + '"> 套/天 ' +
+        '<button class="btn-small" id="plan-save">保存</button></div>' +
+        '<div class="plan-remind"><label class="plan-chk"><input type="checkbox" id="plan-remind"' + (plan.remind ? ' checked' : '') + '> 开启浏览器每日提醒</label>' +
+        '<span class="plan-rm-tip">开启后，当你当天未达标时访问本页会收到温和提醒（需授权通知权限；站点关闭时无法推送）</span></div>' +
+      '</div></div>';
+
+    // ---- 近 90 天学习活跃度热力图 ----
+    var actMap = {};
+    keys.forEach(function (k) { (prog[k].history || []).forEach(function (h) { actMap[h.date] = (actMap[h.date] || 0) + 1; }); });
+    var heatCells = '';
+    var hbase = new Date(); hbase.setDate(hbase.getDate() - 89);
+    for (var hd = new Date(hbase); hd <= new Date(); hd.setDate(hd.getDate() + 1)) {
+      var hds = hd.getFullYear() + '-' + String(hd.getMonth() + 1).padStart(2, '0') + '-' + String(hd.getDate()).padStart(2, '0');
+      var hc = actMap[hds] || 0;
+      var lvl = hc === 0 ? 0 : hc === 1 ? 1 : hc <= 3 ? 2 : hc <= 5 ? 3 : 4;
+      heatCells += '<div class="heat-cell lvl-' + lvl + '" title="' + hds + '：' + hc + ' 次练习"></div>';
+    }
+    var heatHtml = '<div class="dash-section"><h2>🔥 近 90 天学习活跃度</h2>' +
+      '<div class="heat-wrap"><div class="heat-grid">' + heatCells + '</div>' +
+      '<div class="heat-legend">少 <span class="heat-cell lvl-0"></span><span class="heat-cell lvl-1"></span><span class="heat-cell lvl-2"></span><span class="heat-cell lvl-3"></span><span class="heat-cell lvl-4"></span> 多</div></div></div>';
+
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>学习仪表盘</span></div>' +
       '<div class="dash-header"><h1>📊 我的学习仪表盘</h1><p>记录你的练习轨迹与进步</p></div>' +
       statCards +
-      toolsHtml + dailyHtml + countdownHtml + achHtml +
+      toolsHtml + dailyHtml + countdownHtml + achHtml + planHtml +
       (trendHtml ? '<div class="dash-section"><h2>📈 成绩趋势</h2><div class="trend-bars">' + trendHtml + '</div></div>' : '') +
+      heatHtml +
       (untried ? '<div class="dash-suggest"><span>💡 推荐练习：' + untried.title + '</span><button class="btn-primary" data-start-exam data-book="' + untried.bookId + '" data-test="' + untried.testId + '">开始模拟考试 →</button></div>' : '') +
       '<div class="dash-section"><h2>📅 最近练习</h2><div class="activity-list">' + recentHtml + '</div></div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
+
+    var planSave = document.getElementById('plan-save');
+    if (planSave) planSave.addEventListener('click', function () {
+      var v = parseInt(document.getElementById('plan-goal').value, 10);
+      if (isNaN(v) || v < 1) v = 1; if (v > 10) v = 10;
+      var p = Store.getPlan(); p.goal = v; Store.setPlan(p);
+      toast('已保存每日目标：' + v + ' 套/天'); renderDashboard();
+    });
+    var planRemind = document.getElementById('plan-remind');
+    if (planRemind) planRemind.addEventListener('change', function () {
+      var p = Store.getPlan();
+      if (this.checked) {
+        if (!('Notification' in window)) { toast('当前浏览器不支持通知'); this.checked = false; return; }
+        Notification.requestPermission().then(function (perm) {
+          if (perm !== 'granted') { toast('未授权通知权限'); planRemind.checked = false; return; }
+          p.remind = true; Store.setPlan(p); toast('已开启每日提醒');
+          if (!goalMet) { try { new Notification('雅思真题库 · 今日目标未完成', { body: '今天还差 ' + (p.goal - todayCount) + ' 套，加油！' }); } catch (e) {} }
+        });
+      } else { p.remind = false; Store.setPlan(p); toast('已关闭提醒'); }
+    });
 
     var cdSet = document.getElementById('cd-set'); if (cdSet) cdSet.addEventListener('click', setExamDate);
     var cdEdit = document.getElementById('cd-edit'); if (cdEdit) cdEdit.addEventListener('click', setExamDate);
@@ -2499,6 +2560,79 @@
       var b1 = document.getElementById('ws-back'); if (b1) b1.addEventListener('click', function () { wsIdx = null; renderWritingSamples(); });
       var b2 = document.getElementById('ws-back2'); if (b2) b2.addEventListener('click', function () { wsIdx = null; renderWritingSamples(); });
     }
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 语法精讲与自测（辅助学习资料，非真题）----------
+  var grammarOpen = {};
+  function renderGrammar() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '语法精讲 - 雅思真题库';
+    var list = (typeof IELTS_GRAMMAR !== 'undefined') ? IELTS_GRAMMAR : [];
+    if (!list.length) { app.innerHTML = breadcrumb('语法精讲') + '<div class="empty-state"><div class="empty-icon">📐</div><h2>语法库加载中…</h2></div>' + backHome(); return; }
+    function norm(s) { return (s || '').trim().toLowerCase().replace(/[.,;:\s]+$/g, '').replace(/^[.,;:\s]+/g, ''); }
+    function checkAns(input, answer) {
+      var alts = answer.split('/').map(function (x) { return x.trim(); });
+      var n = norm(input);
+      for (var i = 0; i < alts.length; i++) {
+        var alt = alts[i].toLowerCase();
+        if (alt.indexOf('(no article)') !== -1) { if (n === '' || n === 'no article') return true; }
+        if (norm(alt) === n) return true;
+      }
+      return false;
+    }
+    var cards = list.map(function (g) {
+      var open = !!grammarOpen[g.id];
+      var body = '';
+      if (open) {
+        var points = g.points.map(function (p) {
+          return '<li><b>' + escapeHtml(p.rule) + '</b><div class="gr-ex">例：' + escapeHtml(p.example) + '</div></li>';
+        }).join('');
+        var exs = g.exercises.map(function (e, i) {
+          return '<div class="gr-ex-item" data-gid="' + g.id + '" data-eidx="' + i + '">' +
+            '<div class="gr-q">' + (i + 1) + '. ' + escapeHtml(e.q.replace(/_____/g, '<span class="gr-blank">_____</span>')) + '</div>' +
+            '<div class="gr-row"><input class="gr-input" type="text" placeholder="填入答案…" aria-label="答案"><button class="btn-small gr-check">检查</button></div>' +
+            '<div class="gr-fb" style="display:none;"></div></div>';
+        }).join('');
+        body = '<div class="gr-body"><div class="gr-summary">' + escapeHtml(g.summary) + '</div>' +
+          '<div class="gr-points-title">📌 要点</div><ul class="gr-points">' + points + '</ul>' +
+          '<div class="gr-points-title">✍️ 自测（点击“检查”核对，答案客观可校验）</div>' + exs +
+          '<div class="gr-tip">提示：答案不区分大小写；多解以 “/” 分隔，任选其一即可。</div></div>';
+      }
+      return '<div class="gr-card' + (open ? ' open' : '') + '">' +
+        '<div class="gr-head" data-grammar-toggle="' + g.id + '"><span class="gr-icon">' + g.icon + '</span>' +
+        '<div class="gr-head-text"><div class="gr-title">' + escapeHtml(g.title) + '</div>' +
+        '<div class="gr-sub">' + escapeHtml(g.summary.slice(0, 28)) + '…</div></div>' +
+        '<span class="gr-arrow">' + (open ? '▲' : '▼') + '</span></div>' + body + '</div>';
+    }).join('');
+    app.innerHTML = breadcrumb('语法精讲') +
+      '<div class="dash-header"><h1>📐 语法精讲与自测</h1><p>雅思高频语法点讲解 + 即时自测，帮你把“看懂”变成“写对”</p></div>' +
+      '<div class="gr-disclaimer">⚠️ 本模块为<strong>辅助学习资料</strong>，全部为语法练习，<strong>并非雅思真题</strong>，也不能替代真题训练。真题请在「首页 / 模拟考试」中练习。</div>' +
+      '<div class="gr-grid">' + cards + '</div>' + backHome();
+    bindClick('[data-grammar-toggle]', function (el) {
+      var id = el.getAttribute('data-grammar-toggle');
+      grammarOpen[id] = !grammarOpen[id];
+      renderGrammar();
+    });
+    bindClick('.gr-check', function (el) {
+      var item = el.closest('.gr-ex-item');
+      var gid = item.getAttribute('data-gid');
+      var eidx = parseInt(item.getAttribute('data-eidx'), 10);
+      var input = item.querySelector('.gr-input');
+      var fb = item.querySelector('.gr-fb');
+      var g = list.find(function (x) { return x.id === gid; });
+      var e = g.exercises[eidx];
+      var ok = checkAns(input.value, e.a);
+      fb.style.display = '';
+      if (ok) {
+        fb.className = 'gr-fb gr-ok';
+        fb.innerHTML = '✅ 正确！<div class="gr-explain">' + escapeHtml(e.ex) + '</div>';
+      } else {
+        fb.className = 'gr-fb gr-wrong';
+        fb.innerHTML = '❌ 正确答案：<b>' + escapeHtml(e.a) + '</b><div class="gr-explain">' + escapeHtml(e.ex) + '</div>';
+      }
+    });
     window.scrollTo(0, 0);
   }
 
