@@ -1,7 +1,7 @@
 /*
- * 剑13 写作真实剑桥真题覆盖补丁
+ * 剑13 写作剑桥练习题目覆盖补丁
  * 来源: mdhira-ai/advancedenglishtests-updated (data/cambridgeWritingTasks.ts)
- * 说明: 写作题目(prompt)为真实剑桥雅思原题；modelAnswer 为官方/权威范文（若源提供）。
+ * 说明: 写作题目(prompt)为剑桥雅思原题；modelAnswer 为官方/权威范文（若源提供）。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
@@ -93,5 +93,5 @@
       }
     ];
   })();
-  console.log('[real-writing-13] 已覆盖为真实剑桥写作真题');
+  console.log('[real-writing-13] 已覆盖为写作练习题目（待与原版书核对）');
 })();
