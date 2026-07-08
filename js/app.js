@@ -1,5 +1,5 @@
 /**
- * 雅思真题网站交互逻辑
+ * 雅思练习网站交互逻辑
  * 练习模式 + 考试模式
  * 练习模式：查看题目与答案，支持TTS听力朗读
  * 考试模式：模拟真实雅思考试，含计时器、答题输入、自动评分
@@ -146,7 +146,7 @@
     currentView = { bookId: null, testId: null };
     TTS.stop();
     if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
-    document.title = '雅思真题库 - 历年雅思官方真题与答案';
+    document.title = '雅思练习库 - 雅思练习题目与参考答案';
 
     const prog = Store.getProgress();
     const bookCards = IELTS_DATA.books.filter(function (book) {
@@ -197,7 +197,7 @@
       '<button class="mode-btn' + (currentMode === 'exam' ? ' active' : '') + '" data-mode="exam">📝 考试模式</button>' +
       '</div>' +
       '<p class="mode-hint">' + (currentMode === 'practice'
-        ? '浏览真题题目与答案，支持听力语音朗读'
+        ? '浏览雅思练习题目与答案，支持听力语音朗读'
         : '模拟真实雅思考试流程，含计时器、答题、自动评分') + '</p>' +
       '</div>';
 
@@ -220,13 +220,13 @@
       '<section class="hero">' +
       '<div class="hero-content">' +
       '<div class="hero-badge">IELTS Official Practice</div>' +
-      '<h1 class="hero-title">雅思真题库</h1>' +
-      '<p class="hero-subtitle">历年剑桥雅思官方真题 · 听力 / 阅读 / 写作 / 口语</p>' +
+      '<h1 class="hero-title">雅思练习库</h1>' +
+      '<p class="hero-subtitle">雅思练习题目 · 听力 / 阅读 / 写作 / 口语</p>' +
       '<p class="hero-desc">' + (currentMode === 'exam'
         ? '模拟真实雅思考试流程，在线答题、自动评分、Band Score估算'
-        : '收录剑桥雅思系列真题，每套试题包含完整四部分题目与参考答案，助你高效备考') + '</p>' +
+        : '收录雅思系列练习题目，每套试题包含完整四部分题目与参考答案，助你高效备考') + '</p>' +
       '<div class="hero-stats">' +
-      '<div class="stat"><span class="stat-num">' + IELTS_DATA.books.filter(b => b.tests.length > 0).length + '</span><span class="stat-label">真题系列</span></div>' +
+      '<div class="stat"><span class="stat-num">' + IELTS_DATA.books.filter(b => b.tests.length > 0).length + '</span><span class="stat-label">练习系列</span></div>' +
       '<div class="stat"><span class="stat-num">4</span><span class="stat-label">考试模块</span></div>' +
       '<div class="stat"><span class="stat-num">40</span><span class="stat-label">每套题数</span></div>' +
       '</div>' +
@@ -236,8 +236,8 @@
       '<section class="books-section">' +
       searchBannerHtml +
       '<div class="section-header">' +
-      '<h2>选择真题系列</h2>' +
-      '<p>' + (currentMode === 'exam' ? '点击卡片进入模拟考试' : '点击下方卡片进入对应真题') + '</p>' +
+      '<h2>选择练习系列</h2>' +
+      '<p>' + (currentMode === 'exam' ? '点击卡片进入模拟考试' : '点击下方卡片进入对应练习') + '</p>' +
       '</div>' +
       '<div class="books-grid">' + bookCards + '</div>' +
       '</section>' +
@@ -245,7 +245,7 @@
       '<div class="section-header"><h2>' + (currentMode === 'exam' ? '考试功能' : '备考功能') + '</h2></div>' +
       featuresHtml +
       '</section>' +
-      '<footer class="footer"><p>雅思真题库 · 仅供学习参考使用 · 听力/阅读/写作/口语题目来自剑桥雅思官方真题，范文与语法等为辅助参考资料</p></footer>';
+      '<footer class="footer"><p>雅思练习库 · 仅供学习参考使用 · 听力/阅读/写作/口语题目为雅思练习内容（非官方真题），范文与语法等为辅助参考资料</p></footer>';
 
     // 绑定模式切换
     document.querySelectorAll('.mode-btn').forEach(function (btn) {
@@ -281,12 +281,12 @@
     TTS.stop();
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
     if (!book) { renderHome(); return; }
-    document.title = book.fullTitle + ' - 雅思真题库';
+    document.title = book.fullTitle + ' - 雅思练习库';
 
     if (book.tests.length === 0) {
       app.innerHTML =
         '<div class="breadcrumb"><a href="#" data-nav="home">首页</a><span class="sep">/</span><span>' + book.fullTitle + '</span></div>' +
-        '<div class="empty-state"><div class="empty-icon">📚</div><h2>' + book.fullTitle + '</h2><p>该系列真题正在收录中，敬请期待</p><button class="btn-back" data-nav="home">返回首页</button></div>';
+        '<div class="empty-state"><div class="empty-icon">📚</div><h2>' + book.fullTitle + '</h2><p>该系列练习正在收录中，敬请期待</p><button class="btn-back" data-nav="home">返回首页</button></div>';
       bindNav();
       window.scrollTo(0, 0);
       return;
@@ -341,14 +341,14 @@
     if (!book) { renderHome(); return; }
     const test = book.tests.find(function (t) { return t.id === testId; });
     if (!test) { renderBook(bookId); return; }
-    document.title = book.fullTitle + ' ' + test.title + ' - 雅思真题库';
+    document.title = book.fullTitle + ' ' + test.title + ' - 雅思练习库';
 
     app.innerHTML =
       '<div class="breadcrumb">' +
       '<a href="#" data-nav="home">首页</a><span class="sep">/</span>' +
       '<a href="#" data-nav="book" data-book="' + bookId + '">' + book.fullTitle + '</a><span class="sep">/</span>' +
       '<span>' + test.title + '</span></div>' +
-      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + examTag(true) + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
+      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + examTag(false, '📝 练习') + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
       '<div class="sections-container">' +
       renderListening(test.listening, bookId, testId) +
       renderReading(test.reading) +
@@ -414,7 +414,7 @@
 
     return (
       '<div class="module-block module-listening">' +
-      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🎧</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
       '<p class="module-intro">' + data.intro + ' · 支持语音朗读原文</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       sectionsHtml + '</div>'
@@ -475,7 +475,7 @@
     }).join('');
     return (
       '<div class="module-block module-reading">' +
-      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
+      '<div class="module-header"><span class="module-icon">📖</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' +
       '<div class="all-answer-toggle"><button class="btn-toggle-all" data-action="show">显示全部答案</button></div>' +
       passagesHtml + '</div>'
@@ -501,7 +501,7 @@
     }).join('');
     return (
       '<div class="module-block module-writing">' +
-      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
+      '<div class="module-header"><span class="module-icon">✍️</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + tasksHtml + '</div>'
     );
   }
@@ -545,7 +545,7 @@
     }).join('');
     return (
       '<div class="module-block module-speaking">' +
-      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + ' ' + examTag(true) + '</h2>' +
+      '<div class="module-header"><span class="module-icon">🗣️</span><div><h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2>' +
       '<p class="module-intro">' + data.intro + '</p></div></div>' + partsHtml + '</div>'
     );
   }
@@ -663,7 +663,7 @@
     if (!book) { renderHome(); return; }
     const test = book.tests.find(function (t) { return t.id === testId; });
     if (!test) { renderBook(bookId); return; }
-    document.title = book.fullTitle + ' ' + test.title + ' 模拟考试 - 雅思真题库';
+    document.title = book.fullTitle + ' ' + test.title + ' 模拟考试 - 雅思练习库';
 
     // 统计题目数量
     var listenQ = 0;
@@ -726,22 +726,22 @@
   // ========== 真题 / 非真题 标识 ==========
   function examTag(real, text) {
     if (real) {
-      var rlabel = text || '✅ 真题';
-      return '<span class="exam-tag tag-real" title="题目与题型来自剑桥雅思官方真题">' + rlabel + '</span>';
+      var rlabel = text || '📝 练习';
+      return '<span class="exam-tag tag-real" title="雅思练习内容（非官方真题）">' + rlabel + '</span>';
     }
-    return '<span class="exam-tag tag-fake" title="辅助学习资料，并非雅思考试真题">' + (text || '📝 非真题') + '</span>';
+    return '<span class="exam-tag tag-fake" title="雅思练习内容，并非剑桥官方真题">' + (text || '📝 非真题') + '</span>';
   }
 
   function renderExam(bookId, testId) {
     const book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
     const test = book.tests.find(function (t) { return t.id === testId; });
 
-    document.title = book.fullTitle + ' ' + test.title + ' [考试中] - 雅思真题库';
+    document.title = book.fullTitle + ' ' + test.title + ' [考试中] - 雅思练习库';
 
     app.innerHTML =
       '<div class="exam-toolbar">' +
       '<div class="exam-toolbar-left">' +
-      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' + examTag(true) +
+      '<span class="exam-toolbar-title">📝 ' + book.fullTitle + ' ' + test.title + '</span>' + examTag(false, '📝 练习') +
       '</div>' +
       '<div class="exam-toolbar-right">' +
       '<div class="exam-timer" id="exam-timer">02:30:00</div>' +
@@ -806,7 +806,7 @@
     return (
       '<div class="module-block module-listening">' +
       '<div class="module-header"><span class="module-icon">🎧</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + ' · 点击播放按钮开始听力</p></div></div>' +
       sectionsHtml + '</div>'
     );
   }
@@ -833,7 +833,7 @@
     return (
       '<div class="module-block module-reading">' +
       '<div class="module-header"><span class="module-icon">📖</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       passagesHtml + '</div>'
     );
   }
@@ -860,7 +860,7 @@
     return (
       '<div class="module-block module-writing">' +
       '<div class="module-header"><span class="module-icon">✍️</span><div>' +
-      '<h2>' + data.title + ' ' + examTag(true) + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
+      '<h2>' + data.title + ' ' + examTag(false, '📝 练习') + '</h2><p class="module-intro">' + data.intro + '</p></div></div>' +
       tasksHtml + '</div>'
     );
   }
@@ -1285,7 +1285,7 @@
     var mins = Math.floor(timeUsed / 60);
     var secs = timeUsed % 60;
 
-    document.title = '考试成绩 - 雅思真题库';
+    document.title = '考试成绩 - 雅思练习库';
 
     // 成绩卡片
     var scoreCards =
@@ -1675,7 +1675,7 @@
   function renderDashboard() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '学习仪表盘 - 雅思真题库';
+    document.title = '学习仪表盘 - 雅思练习库';
     var prog = Store.getProgress();
     var wrong = Store.getWrong();
     var keys = Object.keys(prog);
@@ -1820,7 +1820,7 @@
         Notification.requestPermission().then(function (perm) {
           if (perm !== 'granted') { toast('未授权通知权限'); planRemind.checked = false; return; }
           p.remind = true; Store.setPlan(p); toast('已开启每日提醒');
-          if (!goalMet) { try { new Notification('雅思真题库 · 今日目标未完成', { body: '今天还差 ' + (p.goal - todayCount) + ' 套，加油！' }); } catch (e) {} }
+          if (!goalMet) { try { new Notification('雅思练习库 · 今日目标未完成', { body: '今天还差 ' + (p.goal - todayCount) + ' 套，加油！' }); } catch (e) {} }
         });
       } else { p.remind = false; Store.setPlan(p); toast('已关闭提醒'); }
     });
@@ -1834,7 +1834,7 @@
   function renderWrongBook() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '错题本 - 雅思真题库';
+    document.title = '错题本 - 雅思练习库';
     var wrong = Store.getWrong().slice().reverse();
 
     function bookTestName(item) {
@@ -1878,7 +1878,7 @@
   function renderFavorites() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '收藏夹 - 雅思真题库';
+    document.title = '收藏夹 - 雅思练习库';
     var fav = Store.getFav();
     var cards = '';
     if (fav.length) {
@@ -1899,8 +1899,8 @@
     }
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>收藏夹</span></div>' +
-      '<div class="dash-header"><h1>⭐ 我的收藏</h1><p>共 ' + fav.length + ' 套收藏真题</p></div>' +
-      (fav.length ? '<div class="fav-list">' + cards + '</div>' : '<div class="empty-state"><div class="empty-icon">⭐</div><h2>还没有收藏</h2><p>在真题卡片上点击「收藏」即可加入</p></div>') +
+      '<div class="dash-header"><h1>⭐ 我的收藏</h1><p>共 ' + fav.length + ' 套收藏练习</p></div>' +
+      (fav.length ? '<div class="fav-list">' + cards + '</div>' : '<div class="empty-state"><div class="empty-icon">⭐</div><h2>还没有收藏</h2><p>在练习卡片上点击「收藏」即可加入</p></div>') +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
 
     document.querySelectorAll('[data-nav-book]').forEach(function (btn) {
@@ -2014,7 +2014,7 @@
   // 生词条目 -> HTML（含中文/英文释义、音标、例句、加载态）
   function vocabListHtml(vocab) {
     if (!vocab.length) {
-      return '<div class="empty-state"><div class="empty-icon">📝</div><h2>生词本为空</h2><p>在练习模式阅读真题中<b>双击单词</b>即可快速收藏，或在此手动添加</p></div>';
+      return '<div class="empty-state"><div class="empty-icon">📝</div><h2>生词本为空</h2><p>在练习模式阅读练习中<b>双击单词</b>即可快速收藏，或在此手动添加</p></div>';
     }
     return vocab.map(function (v, idx) {
       var cn = (v.cn != null && v.cn !== '') ? v.cn : v.meaning;
@@ -2064,7 +2064,7 @@
   function renderVocab() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '生词本 - 雅思真题库';
+    document.title = '生词本 - 雅思练习库';
     var vocab = Store.getVocab();
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>生词本</span></div>' +
@@ -2154,7 +2154,7 @@
     TTS.stop();
     var list = Store.getVocab();
     if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
-    document.title = '生词背诵 - 雅思真题库';
+    document.title = '生词背诵 - 雅思练习库';
     var queue = list.slice().sort(function (a, b) { return (a.level || 0) - (b.level || 0); });
     var pos = 0, knownCnt = 0;
     function card() {
@@ -2224,7 +2224,7 @@
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
     ctx.font = 'bold 56px "PingFang SC", "Microsoft YaHei", sans-serif';
-    ctx.fillText('雅思真题库 · 成绩报告', W / 2, 130);
+    ctx.fillText('雅思练习库 · 成绩报告', W / 2, 130);
     ctx.font = '30px "PingFang SC", sans-serif'; ctx.fillStyle = '#cfe9e6';
     ctx.fillText((d.bookTitle || '') + ' ' + (d.testTitle || ''), W / 2, 180);
     ctx.beginPath(); ctx.arc(W / 2, 430, 200, 0, Math.PI * 2);
@@ -2377,14 +2377,14 @@
       if (p.bestR > bestR) bestR = p.bestR;
     });
     return [
-      { icon: '🎉', name: '首战告捷', desc: '完成第 1 套真题', ok: completed >= 1 },
+      { icon: '🎉', name: '首战告捷', desc: '完成第 1 套练习', ok: completed >= 1 },
       { icon: '🔥', name: '三日打卡', desc: '连续学习 3 天', ok: streak >= 3 },
       { icon: '🔥', name: '一周坚持', desc: '连续学习 7 天', ok: streak >= 7 },
-      { icon: '📚', name: '小有积累', desc: '完成 5 套真题', ok: completed >= 5 },
-      { icon: '📚', name: '备考达人', desc: '完成 10 套真题', ok: completed >= 10 },
+      { icon: '📚', name: '小有积累', desc: '完成 5 套练习', ok: completed >= 5 },
+      { icon: '📚', name: '备考达人', desc: '完成 10 套练习', ok: completed >= 10 },
       { icon: '💯', name: '总分 7.0', desc: '单次总分达 Band 7.0', ok: bestOverall >= 7.0 },
       { icon: '🎯', name: '单项满贯', desc: '单模块答错 ≤ 4 题', ok: bestL >= 36 || bestR >= 36 },
-      { icon: '⭐', name: '收藏控', desc: '收藏 3 套真题', ok: fav >= 3 },
+      { icon: '⭐', name: '收藏控', desc: '收藏 3 套练习', ok: fav >= 3 },
       { icon: '📝', name: '词海拾贝', desc: '生词本积累 20 词', ok: vocab >= 20 }
     ];
   }
@@ -2427,7 +2427,7 @@
   function renderSpeakingBank() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '口语话题库 - 雅思真题库';
+    document.title = '口语话题库 - 雅思练习库';
     var bank = (typeof SPEAKING_BANK !== 'undefined') ? SPEAKING_BANK : [];
     if (!bank.length) { app.innerHTML = breadcrumb('口语话题库') + '<div class="empty-state"><div class="empty-icon">🗣️</div><h2>题库加载中…</h2></div>' + backHome(); return; }
     if (sbTopic === null) {
@@ -2439,7 +2439,7 @@
         return '<div class="topic-card" data-sb-topic="' + ti + '"><div class="topic-icon">🗣️</div><h3>' + escapeHtml(t.title) + '</h3><p>Part1 · Part2 · Part3 完整范文</p><span class="topic-go">查看 →</span></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(true, '✅ 真题话题') + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，话题与问题来自雅思口语真题，示范回答为参考示例</p></div>' +
+        '<div class="dash-header"><h1>🗣️ 雅思口语话题库 ' + examTag(false, '📝 练习话题') + '</h1><p>共 ' + bank.length + ' 大类 · ' + bank.reduce(function (s, c) { return s + c.topics.length; }, 0) + ' 个高频话题，话题与问题为雅思练习内容，示范回答为参考示例</p></div>' +
         tabs + '<div class="topic-grid">' + topics + '</div>' + backHome();
       bindClick('[data-sb-cat]', function (el) { sbCat = parseInt(el.getAttribute('data-sb-cat'), 10); sbTopic = null; renderSpeakingBank(); });
       bindClick('[data-sb-topic]', function (el) { sbTopic = parseInt(el.getAttribute('data-sb-topic'), 10); sbP2Ver = 0; renderSpeakingBank(); });
@@ -2463,7 +2463,7 @@
         return '<div class="qa-item"><div class="qa-q">' + escapeHtml(x.q) + '</div><div class="qa-a">' + escapeHtml(x.a) + spk(x.a) + '</div></div>';
       }).join('');
       app.innerHTML = breadcrumb('口语话题库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + examTag(true) + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(t.title) + ' ' + examTag(false, '📝 练习') + '</h1><p>' + escapeHtml(bank[sbCat].category) + '</p></div><button class="btn-back" id="sb-back">← 返回</button></div>' +
         '<div class="speak-detail"><h2>Part 1</h2>' + p1 + '<h2>Part 2 · 话题卡</h2>' + p2 + '<h2>Part 3</h2>' + p3 + '</div>' +
         '<div style="text-align:center;margin-top:24px;"><button class="btn-back" id="sb-back2">← 返回话题列表</button></div>';
       var b1 = document.getElementById('sb-back'); if (b1) b1.addEventListener('click', function () { sbTopic = null; renderSpeakingBank(); });
@@ -2485,7 +2485,7 @@
   function renderWritingTemplates() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '写作模板库 - 雅思真题库';
+    document.title = '写作模板库 - 雅思练习库';
     var tpl = (typeof WRITING_TEMPLATES !== 'undefined') ? WRITING_TEMPLATES : { task1: [], task2: [] };
     if (wtIdx === null) {
       var tabs = '<div class="cat-tabs"><button class="cat-tab' + (wtType === 'task1' ? ' active' : '') + '" data-wt-type="task1">Task 1 图表类</button><button class="cat-tab' + (wtType === 'task2' ? ' active' : '') + '" data-wt-type="task2">Task 2 议论文</button></div>';
@@ -2531,7 +2531,7 @@
   function renderWritingSamples() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '写作范文库 - 雅思真题库';
+    document.title = '写作范文库 - 雅思练习库';
     var data = (typeof WRITING_SAMPLES !== 'undefined') ? WRITING_SAMPLES : { task1: [], task2: [] };
     if (wsIdx === null) {
       var typeTabs = '<div class="cat-tabs"><button class="cat-tab' + (wsType === 'task1' ? ' active' : '') + '" data-ws-type="task1">Task 1 图表类</button><button class="cat-tab' + (wsType === 'task2' ? ' active' : '') + '" data-ws-type="task2">Task 2 议论文</button></div>';
@@ -2546,7 +2546,7 @@
           return '<div class="topic-card" data-ws-idx="' + i + '"><div class="topic-icon">📄</div><span class="band-badge band-' + x.band + '">Band ' + x.band + '</span><h3>' + escapeHtml(x.type) + '</h3><p>' + escapeHtml(preview) + '</p><span class="topic-go">查看范文 →</span></div>';
         }).join('');
         app.innerHTML = breadcrumb('写作范文库') +
-          '<div class="dash-header"><h1>📚 雅思写作范文库 ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思真题题型，范文与解析为高分参考示例（非官方发布）</p></div>' +
+          '<div class="dash-header"><h1>📚 雅思写作范文库 ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思练习题型，范文与解析为高分参考示例（非官方发布）</p></div>' +
           typeTabs + bandTabs + '<div class="topic-grid">' + cards + '</div>' + backHome();
       }
       bindClick('[data-ws-type]', function (el) { wsType = el.getAttribute('data-ws-type'); wsIdx = null; renderWritingSamples(); });
@@ -2559,7 +2559,7 @@
       if (!x) { wsIdx = null; renderWritingSamples(); return; }
       var sampleHtml = x.sample.split('\n').map(function (line) { return '<p>' + escapeHtml(line) + '</p>'; }).join('');
       app.innerHTML = breadcrumb('写作范文库') +
-        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span> ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思真题题型 · 范文为参考示例</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
+        '<div class="dash-header dash-header-row"><div><h1>' + escapeHtml(x.type) + ' <span class="band-badge band-' + x.band + '">Band ' + x.band + '</span> ' + examTag(false, '📝 参考范文') + '</h1><p>题目为雅思练习题型 · 范文为参考示例</p></div><button class="btn-back" id="ws-back">← 返回</button></div>' +
         '<div class="wt-detail">' +
         '<div class="wf-title">📋 题目</div><div class="qa-block">' + escapeHtml(x.prompt).replace(/\n/g, '<br>') + '</div>' +
         '<div class="wf-title">✍️ 范文</div><div class="model-answer">' + sampleHtml + '</div>' +
@@ -2577,7 +2577,7 @@
   function renderGrammar() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '语法精讲 - 雅思真题库';
+    document.title = '语法精讲 - 雅思练习库';
     var list = (typeof IELTS_GRAMMAR !== 'undefined') ? IELTS_GRAMMAR : [];
     if (!list.length) { app.innerHTML = breadcrumb('语法精讲') + '<div class="empty-state"><div class="empty-icon">📐</div><h2>语法库加载中…</h2></div>' + backHome(); return; }
     function norm(s) { return (s || '').trim().toLowerCase().replace(/[.,;:\s]+$/g, '').replace(/^[.,;:\s]+/g, ''); }
@@ -2617,7 +2617,7 @@
     }).join('');
     app.innerHTML = breadcrumb('语法精讲') +
       '<div class="dash-header"><h1>📐 语法精讲与自测 ' + examTag(false, '📝 非真题') + '</h1><p>雅思高频语法点讲解 + 即时自测，帮你把“看懂”变成“写对”</p></div>' +
-      '<div class="gr-disclaimer">⚠️ 本模块为<strong>辅助学习资料</strong>，全部为语法练习，<strong>并非雅思真题</strong>，也不能替代真题训练。真题请在「首页 / 模拟考试」中练习。</div>' +
+      '<div class="gr-disclaimer">⚠️ 本模块为<strong>辅助学习资料</strong>，全部为语法练习，<strong>并非雅思真题</strong>，也不替代真题训练。如需练习真题，请使用剑桥雅思官方原版书。</div>' +
       '<div class="gr-grid">' + cards + '</div>' + backHome();
     bindClick('[data-grammar-toggle]', function (el) {
       var id = el.getAttribute('data-grammar-toggle');
@@ -2652,7 +2652,7 @@
     TTS.stop();
     var list = Store.getVocab();
     if (!list.length) { toast('生词本还是空的，先去添加单词吧'); renderVocab(); return; }
-    document.title = '单词测试 - 雅思真题库';
+    document.title = '单词测试 - 雅思练习库';
     startVocabTest();
   }
   function startVocabTest() {
@@ -2738,7 +2738,7 @@
   function renderCommunity() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '学习社区 - 雅思真题库';
+    document.title = '学习社区 - 雅思练习库';
     var posts = Store.getCommunity();
     var feedHtml = posts.length ? posts.map(function (p) {
       return '<div class="comm-post"><div class="comm-post-body">' + escapeHtml(p.text) + '</div><div class="comm-post-meta">' + (p.score ? '<span class="comm-score">🏆 ' + escapeHtml(p.score) + '</span>' : '') + '<span>' + p.date + '</span></div></div>';
@@ -2812,12 +2812,12 @@
   function renderQuickPractice() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
-    document.title = '快速练习 - 雅思真题库';
+    document.title = '快速练习 - 雅思练习库';
     var pool = buildQuickPool();
     pool.sort(function () { return Math.random() - 0.5; });
     qpQuestions = pool.slice(0, 10); qpPos = 0; qpCorrect = 0;
     app.innerHTML = breadcrumb('快速练习') +
-      '<div class="dash-header"><h1>⚡ 快速练习 ' + examTag(true) + '</h1><p>从全部真题中随机抽取 10 题，随时自测</p></div>' +
+      '<div class="dash-header"><h1>⚡ 快速练习 ' + examTag(false, '📝 练习') + '</h1><p>从全部练习中随机抽取 10 题，随时自测</p></div>' +
       '<div class="qp-box" id="qp-box"></div>' +
       '<div style="text-align:center;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
     showQp();
