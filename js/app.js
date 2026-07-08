@@ -376,10 +376,22 @@
             ? '<div class="tts-unsupported">⚠️ 当前浏览器不支持语音朗读功能，建议使用 Chrome 或 Edge 浏览器</div>'
             : '<div class="tts-unsupported">该部分听力原文正在准备中</div>');
 
+      var lastInstr = null;
       const questionsHtml = section.questions.map(function (item, qIdx) {
+        var instrHtml = '';
+        if (item.instruction && item.instruction !== lastInstr) {
+          instrHtml = '<div class="q-instruction">' + item.instruction + '</div>';
+          lastInstr = item.instruction;
+        }
+        var optsHtml = '';
+        if (item.options && item.options.length) {
+          optsHtml = '<ul class="q-options">' + item.options.map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ul>';
+        }
         return (
           '<div class="question-item"><div class="question-num">Q' + (qIdx + 1) + '</div>' +
-          '<div class="question-body"><div class="question-text">' + item.q + '</div>' +
+          '<div class="question-body">' + instrHtml +
+          (item.type ? '<span class="q-type">' + item.type + '</span> ' : '') +
+          '<div class="question-text">' + item.q + '</div>' + optsHtml +
           '<div class="answer-text" data-hidden="true"><span class="answer-label">答案：</span>' + item.a + '</div>' +
           '<button class="btn-toggle-answer">显示答案</button></div></div>'
         );
@@ -431,11 +443,22 @@
   // ========== 练习模式：阅读渲染 ==========
   function renderReading(data) {
     const passagesHtml = data.passages.map(function (passage, idx) {
+      var lastInstr = null;
       const questionsHtml = passage.questions.map(function (item, qIdx) {
+        var instrHtml = '';
+        if (item.instruction && item.instruction !== lastInstr) {
+          instrHtml = '<div class="q-instruction">' + item.instruction + '</div>';
+          lastInstr = item.instruction;
+        }
+        var optsHtml = '';
+        if (item.options && item.options.length) {
+          optsHtml = '<ul class="q-options">' + item.options.map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ul>';
+        }
         return (
           '<div class="question-item"><div class="question-num">Q' + (qIdx + 1) + '</div>' +
-          '<div class="question-body"><div class="question-text">' +
-          (item.type ? '<span class="q-type">' + item.type + '</span> ' : '') + item.q + '</div>' +
+          '<div class="question-body">' + instrHtml +
+          (item.type ? '<span class="q-type">' + item.type + '</span> ' : '') +
+          '<div class="question-text">' + item.q + '</div>' + optsHtml +
           '<div class="answer-text" data-hidden="true"><span class="answer-label">答案：</span>' + item.a + '</div>' +
           '<button class="btn-toggle-answer">显示答案</button></div></div>'
         );
