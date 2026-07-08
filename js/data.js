@@ -1,5 +1,5 @@
 /**
- * 剑桥雅思真题数据
+ * 剑桥雅思练习数据
  * 包含听力、阅读、写作、口语四部分题目与答案
  * 题目为雅思考试格式原创练习内容
  */
@@ -11,7 +11,7 @@ const IELTS_DATA = {
       title: '剑19',
       fullTitle: '剑桥雅思19',
       year: 2024,
-      desc: '最新真题，2024年发布',
+      desc: '练习题目，2024年发布',
       tests: [
         {
           id: 1,
@@ -192,7 +192,7 @@ const IELTS_DATA = {
       title: '剑18',
       fullTitle: '剑桥雅思18',
       year: 2023,
-      desc: '2023年发布真题',
+      desc: '2023年发布练习',
       tests: [
         {
           id: 1,
@@ -362,7 +362,7 @@ const IELTS_DATA = {
       title: '剑17',
       fullTitle: '剑桥雅思17',
       year: 2022,
-      desc: '2022年发布真题',
+      desc: '2022年发布练习',
       tests: [
         {
           id: 1,
@@ -531,7 +531,7 @@ const IELTS_DATA = {
       title: '剑16',
       fullTitle: '剑桥雅思16',
       year: 2021,
-      desc: '2021年发布真题',
+      desc: '2021年发布练习',
       tests: []
     },
     {
@@ -539,7 +539,7 @@ const IELTS_DATA = {
       title: '剑15',
       fullTitle: '剑桥雅思15',
       year: 2020,
-      desc: '2020年发布真题',
+      desc: '2020年发布练习',
       tests: []
     },
     {
@@ -547,7 +547,7 @@ const IELTS_DATA = {
       title: '剑14',
       fullTitle: '剑桥雅思14',
       year: 2019,
-      desc: '2019年发布真题',
+      desc: '2019年发布练习',
       tests: []
     },
     {
@@ -555,7 +555,7 @@ const IELTS_DATA = {
       title: '剑13',
       fullTitle: '剑桥雅思13',
       year: 2018,
-      desc: '2018年发布真题',
+      desc: '2018年发布练习',
       tests: []
     },
     {
@@ -563,7 +563,7 @@ const IELTS_DATA = {
       title: '剑12',
       fullTitle: '剑桥雅思12',
       year: 2017,
-      desc: '2017年发布真题',
+      desc: '2017年发布练习',
       tests: []
     },
     {
@@ -571,7 +571,7 @@ const IELTS_DATA = {
       title: '剑11',
       fullTitle: '剑桥雅思11',
       year: 2016,
-      desc: '2016年发布真题',
+      desc: '2016年发布练习',
       tests: []
     }
   ]
