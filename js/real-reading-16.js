@@ -1,7 +1,7 @@
 /*
- * 剑16 阅读真实剑桥真题覆盖补丁（来自 GitHub 公开真题资源，逐题含官方题型说明/选项/答案）
- * 来源: mdhira-ai/advancedenglishtests-updated (books 8-17 真实剑桥阅读/听力/写作)
- * 说明: 阅读篇章正文与题目均为真实剑桥雅思内容；答案为官方答案键。
+ * 剑16 阅读剑桥练习题目覆盖补丁（来自 GitHub 公开练习题目资源，逐题含官方题型说明/选项/答案）
+ * 来源: mdhira-ai/advancedenglishtests-updated (books 8-17 剑桥阅读/听力/写作)
+ * 说明: 阅读篇章正文与题目均为剑桥雅思内容；答案为官方答案键。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
