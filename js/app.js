@@ -355,7 +355,7 @@
       '<div class="sections-container">' +
       renderListening(test.listening, bookId, testId) +
       renderReading(test.reading) +
-      renderWriting(test.writing) +
+      renderWriting(test.writing, bookId, testId) +
       renderSpeaking(test.speaking, bookId, testId) +
       '</div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav="book" data-book="' + bookId + '">← 返回' + book.fullTitle + '</button></div>';
@@ -365,6 +365,7 @@
     bindAudioPlayers(bookId, testId);
     bindVocabSelection();
     bindSpeakingScorer();
+    bindWritingScorer();
     window.scrollTo(0, 0);
   }
 
@@ -487,11 +488,15 @@
   }
 
   // ========== 练习模式：写作渲染 ==========
-  function renderWriting(data) {
+  function renderWriting(data, bookId, testId) {
     const tasksHtml = data.tasks.map(function (task, idx) {
       const modelAnswerHtml = (task.modelAnswer || '').split('\n').map(function (line) {
         return line.trim() ? '<p>' + escapeHtml(line) + '</p>' : '';
       }).join('');
+      const taskType = (task.task === 'Task 1') ? 'Task 1' : 'Task 2';
+      const minWords = taskType === 'Task 1' ? 150 : 250;
+      const recKey = (bookId != null ? bookId : 'x') + '-' + (testId != null ? testId : 'x') + '-w' + idx;
+      const scorer = writingScorerHtml(recKey, taskType, task.prompt, minWords);
       return (
         '<div class="exam-section writing-task"><div class="exam-section-header">' +
         '<span class="exam-section-tag tag-writing">' + task.task + '</span>' +
@@ -500,7 +505,8 @@
         '<div class="writing-answer" data-hidden="true"><h4>参考范文</h4>' +
         '<div class="model-answer">' + modelAnswerHtml + '</div>' +
         '<div class="writing-tips"><span>💡 写作提示：</span>' + (task.tips || '') + '</div></div>' +
-        '<button class="btn-toggle-answer btn-writing-toggle">显示范文</button></div>'
+        '<button class="btn-toggle-answer btn-writing-toggle">显示范文</button>' +
+        '<div class="ws-embed">' + scorer + '</div></div>'
       );
     }).join('');
     return (
@@ -1359,6 +1365,10 @@
       var modelAnswerHtml = (task.modelAnswer || '').split('\n').map(function (line) {
         return line.trim() ? '<p>' + escapeHtml(line) + '</p>' : '';
       }).join('');
+      var taskType = (task.task === 'Task 1') ? 'Task 1' : 'Task 2';
+      var minWords = taskType === 'Task 1' ? 150 : 250;
+      var recKey = 'exam-' + bookId + '-' + testId + '-w' + idx;
+      var scorer = userEssay.trim() ? writingScorerHtml(recKey, taskType, task.prompt, minWords, userEssay) : writingScorerHtml(recKey, taskType, task.prompt, minWords, '');
       return (
         '<div class="writing-result">' +
         '<div class="exam-section-header"><span class="exam-section-tag tag-writing">' + task.task + '</span>' +
@@ -1370,7 +1380,9 @@
         '<div class="writing-col"><h4>参考范文</h4>' +
         '<div class="model-answer">' + modelAnswerHtml + '</div>' +
         '<div class="writing-tips"><span>💡 写作提示：</span>' + (task.tips || '') + '</div></div>' +
-        '</div></div>'
+        '</div>' +
+        (userEssay.trim() ? '<div class="ws-embed">' + scorer + '</div>' : '<div class="ws-empty">未作答，无法评分。可在「练习模式」的写作模块粘贴作文进行评分。</div>') +
+        '</div>'
       );
     }).join('');
 
@@ -1441,6 +1453,7 @@
       });
     });
 
+    bindWritingScorer();
     window.scrollTo(0, 0);
   }
 
@@ -1589,6 +1602,7 @@
     else if (page === 'vocab') renderVocab();
     else if (page === 'speaking') renderSpeakingBank();
     else if (page === 'speaking-scores') renderSpeakingScores();
+    else if (page === 'writing-scores') renderWritingScores();
     else if (page === 'writing-tpl') renderWritingTemplates();
     else if (page === 'writing-samples') renderWritingSamples();
     else if (page === 'vocab-test') renderVocabTest();
@@ -1752,6 +1766,7 @@
 
     var toolsHtml = '<div class="dash-section"><h2>🧰 学习工具</h2><div class="tools-grid">' +
       '<div class="tool-card" data-nav-page="speaking"><div class="tool-icon">🗣️</div><h3>口语话题库</h3></div>' +
+      '<div class="tool-card" data-nav-page="writing-scores"><div class="tool-icon">✍️</div><h3>写作评分记录</h3></div>' +
       '<div class="tool-card" data-nav-page="writing-tpl"><div class="tool-icon">✍️</div><h3>写作模板库</h3></div>' +
       '<div class="tool-card" data-nav-page="writing-samples"><div class="tool-icon">📚</div><h3>写作范文库</h3></div>' +
       '<div class="tool-card" data-nav-page="quick"><div class="tool-icon">⚡</div><h3>快速练习</h3></div>' +
@@ -1770,6 +1785,33 @@
       '<div class="dash-stat"><div class="ds-num">' + wrong.length + '</div><div class="ds-label">错题数量</div></div>' +
       '<div class="dash-stat"><div class="ds-num">' + avgOverall + '</div><div class="ds-label">平均总分</div></div>' +
       '</div>';
+
+    // ---- 口语 / 写作 自评进步（读取两个评分 localStorage）----
+    var spkScores = [], wrtScores = [];
+    try { spkScores = JSON.parse(localStorage.getItem('ielts_speaking_scores_v1') || '[]'); } catch (e) {}
+    try { wrtScores = JSON.parse(localStorage.getItem('ielts_writing_scores_v1') || '[]'); } catch (e) {}
+    if (!Array.isArray(spkScores)) spkScores = [];
+    if (!Array.isArray(wrtScores)) wrtScores = [];
+    function agg(arr) {
+      if (!arr.length) return null;
+      var best = 0, sum = 0;
+      arr.forEach(function (s) { var o = Number(s.overall) || 0; if (o > best) best = o; sum += o; });
+      return { n: arr.length, best: best.toFixed(1), avg: (sum / arr.length).toFixed(1) };
+    }
+    var spkAgg = agg(spkScores), wrtAgg = agg(wrtScores);
+    function selfCard(icon, name, aggObj, page) {
+      if (!aggObj) return '<div class="self-card empty"><div class="self-icon">' + icon + '</div><div class="self-name">' + name + '</div><div class="self-empty">尚未评分</div></div>';
+      return '<div class="self-card" data-nav-page="' + page + '" style="cursor:pointer;"><div class="self-icon">' + icon + '</div>' +
+        '<div class="self-name">' + name + '</div>' +
+        '<div class="self-num band-text-' + bandClass(aggObj.best) + '">' + aggObj.best + '</div>' +
+        '<div class="self-sub">最高 Band · 平均 ' + aggObj.avg + ' · ' + aggObj.n + ' 次</div></div>';
+    }
+    var selfAssessHtml = '<div class="dash-section"><h2>🎤 口语 / ✍️ 写作 自评进步</h2>' +
+      '<div class="self-grid">' +
+      selfCard('🗣️', '口语', spkAgg, 'speaking-scores') +
+      selfCard('✍️', '写作', wrtAgg, 'writing-scores') +
+      '</div>' +
+      '<div class="self-tip">口语/写作按雅思官方四项标准自动评分（练习参考），点击卡片查看详细历史。</div></div>';
 
     // ---- 学习计划（每日目标）+ 浏览器提醒 ----
     var plan = Store.getPlan();
@@ -1811,6 +1853,7 @@
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>学习仪表盘</span></div>' +
       '<div class="dash-header"><h1>📊 我的学习仪表盘</h1><p>记录你的练习轨迹与进步</p></div>' +
       statCards +
+      selfAssessHtml +
       toolsHtml + dailyHtml + countdownHtml + achHtml + planHtml +
       (trendHtml ? '<div class="dash-section"><h2>📈 成绩趋势</h2><div class="trend-bars">' + trendHtml + '</div></div>' : '') +
       heatHtml +
@@ -2542,6 +2585,109 @@
     }).join('') : '<div class="empty-state"><div class="empty-icon">🗣️</div><h2>还没有口语评分记录</h2><p>在口语练习中录音或粘贴文本进行评分后，记录会显示在这里。</p></div>';
     app.innerHTML = breadcrumb('口语评分记录') +
       '<div class="dash-header"><h1>🗣️ 我的口语评分记录</h1><p>按雅思四项标准自动评分的历史（练习参考）</p></div>' +
+      '<div class="ss-hist-list">' + list + '</div>' + backHome();
+    window.scrollTo(0, 0);
+  }
+
+  // ==========================================
+  // ========== 写作四项标准评分（粘贴作文 + 评分 + 历史）==========
+  // ==========================================
+  // 评分面板 HTML（文本框 + 自动字数 + 评分按钮；支持预填用户作文）
+  function writingScorerHtml(recKey, taskType, prompt, minWords, presetText) {
+    taskType = taskType === 'Task 1' ? 'Task 1' : 'Task 2';
+    minWords = minWords || (taskType === 'Task 1' ? 150 : 250);
+    var ph = (presetText && presetText.length) ? escapeHtml(presetText) : '';
+    return '<div class="write-scorer" data-rec-key="' + escapeHtml(recKey) + '" data-task="' + taskType + '" data-prompt="' + escapeHtml(prompt || '') + '" data-min="' + minWords + '">' +
+      '<div class="ws-tip">✍️ 按雅思官方写作四项标准（任务完成/回应 · 连贯衔接 · 词汇 · 语法）自动评分，<b>仅供练习参考</b></div>' +
+      '<textarea class="ss-textarea ws-textarea" placeholder="把你的英文作文粘贴/写在这里进行评分（' + taskType + ' 建议 ≥' + minWords + ' 词）…">' + ph + '</textarea>' +
+      '<div class="ws-row"><span class="ws-count">0 词</span><button class="btn-small ws-score-btn">开始评分</button></div>' +
+      '<div class="ss-result"></div>' +
+      '</div>';
+  }
+
+  function renderWritingScoreResult(container, r, meta) {
+    if (!container) return;
+    function gauge(k) {
+      var cr = r.criteria[k];
+      var pct = Math.round(Math.min(9, Math.max(0, cr.band)) / 9 * 100);
+      var fb = cr.feedback.map(function (f) { return '<li>' + escapeHtml(f) + '</li>'; }).join('');
+      return '<div class="ss-crit">' +
+        '<div class="ss-crit-head"><span class="ss-crit-name">' + escapeHtml(cr.label) + '</span>' +
+        '<span class="band-badge band-' + bandClass(cr.band) + '">' + cr.band.toFixed(1) + '</span></div>' +
+        '<div class="ss-bar"><div class="ss-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="ss-crit-desc">' + escapeHtml(cr.desc) + '</div>' +
+        (fb ? '<ul class="ss-fb">' + fb + '</ul>' : '') + '</div>';
+    }
+    container.innerHTML = '<div class="ss-result-inner">' +
+      '<div class="ss-overall"><div class="ss-overall-num band-text-' + bandClass(r.overall) + '">' + r.overall.toFixed(1) + '</div>' +
+      '<div class="ss-overall-label">总体得分 Overall Band (' + escapeHtml(r.taskType) + ')</div></div>' +
+      '<div class="ss-gauges">' + gauge('ta') + gauge('cc') + gauge('lr') + gauge('gra') + '</div>' +
+      '<div class="ss-disclaimer">⚠️ 本评分按雅思官方写作四项标准自动评估，<b>仅供练习参考</b>：依据你的作文文本做字数、词汇、句式、衔接与任务覆盖等语言学分析，<b>不能替代雅思考官或写作批改老师的人工评分</b>（无法判断论证深度与逻辑漏洞）。建议结合官方范文与人工反馈持续改进。</div>' +
+      '</div>';
+    container.style.display = '';
+  }
+
+  function saveWritingScore(res, taskType) {
+    try {
+      var arr = JSON.parse(localStorage.getItem('ielts_writing_scores_v1') || '[]');
+      if (!Array.isArray(arr)) arr = [];
+      arr.unshift({
+        date: todayStr(), taskType: taskType, overall: res.overall,
+        ta: res.criteria.ta.band, cc: res.criteria.cc.band, lr: res.criteria.lr.band, gra: res.criteria.gra.band,
+        words: res.metrics.wordCount, preview: (res.text || '').slice(0, 100)
+      });
+      if (arr.length > 60) arr = arr.slice(0, 60);
+      localStorage.setItem('ielts_writing_scores_v1', JSON.stringify(arr));
+      toast('已保存本次写作评分');
+    } catch (e) {}
+  }
+
+  function bindWritingScorer() {
+    document.querySelectorAll('.write-scorer').forEach(function (el) {
+      if (el.dataset.bound) return;
+      el.dataset.bound = '1';
+      var recKey = el.getAttribute('data-rec-key');
+      var taskType = el.getAttribute('data-task') || 'Task 2';
+      var prompt = el.getAttribute('data-prompt') || '';
+      var minWords = parseInt(el.getAttribute('data-min'), 10) || (taskType === 'Task 1' ? 150 : 250);
+      var ta = el.querySelector('.ws-textarea');
+      var countEl = el.querySelector('.ws-count');
+      var btn = el.querySelector('.ws-score-btn');
+      var resultBox = el.querySelector('.ss-result');
+      function updateCount() {
+        var t = ta ? ta.value.trim() : '';
+        var n = t ? t.split(/\s+/).filter(function (w) { return w.length > 0; }).length : 0;
+        if (countEl) countEl.textContent = n + ' 词';
+      }
+      if (ta) { ta.addEventListener('input', updateCount); updateCount(); }
+      if (btn) btn.addEventListener('click', function () {
+        var text = ta ? ta.value.trim() : '';
+        if (!text) { toast('请先在文本框中输入你的英文作文'); return; }
+        if (!window.IELTS_WRITING_SCORER) { toast('评分引擎未加载'); return; }
+        var res = window.IELTS_WRITING_SCORER.analyze({ text: text, taskType: taskType, prompt: prompt, minWords: minWords });
+        renderWritingScoreResult(resultBox, res, { taskType: taskType });
+        saveWritingScore(res, taskType);
+      });
+    });
+  }
+
+  function renderWritingScores() {
+    currentView = { bookId: null, testId: null };
+    TTS.stop();
+    document.title = '写作评分记录 - 雅思练习库';
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem('ielts_writing_scores_v1') || '[]'); } catch (e) {}
+    if (!Array.isArray(arr)) arr = [];
+    var list = arr.length ? arr.map(function (s) {
+      return '<div class="ss-hist-item">' +
+        '<div class="ss-hist-overall band-text-' + bandClass(s.overall) + '">' + Number(s.overall).toFixed(1) + '</div>' +
+        '<div class="ss-hist-body"><div class="ss-hist-meta">' + escapeHtml(s.taskType) + ' · ' + escapeHtml(s.date) + ' · ' + (s.words || 0) + ' 词</div>' +
+        '<div class="ss-hist-bands">TA/TR ' + Number(s.ta).toFixed(1) + ' · CC ' + Number(s.cc).toFixed(1) + ' · LR ' + Number(s.lr).toFixed(1) + ' · GRA ' + Number(s.gra).toFixed(1) + '</div>' +
+        (s.preview ? '<div class="ss-hist-prev">' + escapeHtml(s.preview) + (s.preview.length >= 100 ? '…' : '') + '</div>' : '') +
+        '</div></div>';
+    }).join('') : '<div class="empty-state"><div class="empty-icon">✍️</div><h2>还没有写作评分记录</h2><p>在写作练习中粘贴你的作文进行评分后，记录会显示在这里。</p></div>';
+    app.innerHTML = breadcrumb('写作评分记录') +
+      '<div class="dash-header"><h1>✍️ 我的写作评分记录</h1><p>按雅思四项标准自动评分的历史（练习参考）</p></div>' +
       '<div class="ss-hist-list">' + list + '</div>' + backHome();
     window.scrollTo(0, 0);
   }
