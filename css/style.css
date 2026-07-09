@@ -21,6 +21,7 @@
   --color-border: #e2e8f0;
   --color-success: #10b981;
   --color-warning: #f59e0b;
+  --color-danger: #ef4444;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
@@ -2999,3 +3000,92 @@ body {
 .self-tip { font-size: 12px; color: var(--color-text-light); margin-top: 10px; line-height: 1.6; }
 
 @media (max-width: 560px) { .self-grid { grid-template-columns: 1fr; } }
+
+/* ========== 练习模式：自测判分 ========== */
+.self-test { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.self-test-input {
+  flex: 1; min-width: 180px; padding: 8px 10px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  font-size: 14px; background: var(--color-bg); color: var(--color-text);
+}
+.self-test-input.st-ok { border-color: var(--color-success); background: rgba(16,185,129,.08); }
+.self-test-input.st-wrong { border-color: var(--color-danger); background: rgba(239,68,68,.08); }
+.self-test-fb { font-size: 13px; width: 100%; min-height: 1.2em; }
+.self-test-fb.fb-ok { color: var(--color-success); }
+.self-test-fb.fb-bad { color: var(--color-danger); }
+.self-test-fb.fb-warn { color: var(--color-warning); }
+
+/* ========== 智能错题本：分类 / 标签 / 解析 ========== */
+.wrong-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px; }
+.wf-tab {
+  padding: 7px 14px; border: 1px solid var(--color-border); border-radius: 999px;
+  background: var(--color-card); color: var(--color-text-light); cursor: pointer;
+  font-size: 13px; transition: all .15s;
+}
+.wf-tab:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.wf-tab.active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.wrong-cat { margin-top: 22px; }
+.wrong-cat-title {
+  font-size: 16px; color: var(--color-text); margin: 0 0 12px;
+  padding-bottom: 6px; border-bottom: 2px solid var(--color-border);
+}
+.wrong-cat-count {
+  display: inline-block; min-width: 22px; text-align: center; margin-left: 4px;
+  font-size: 12px; color: #fff; background: var(--color-text-light);
+  border-radius: 999px; padding: 1px 7px;
+}
+.wrong-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.wrong-tag {
+  font-size: 12px; color: var(--color-text-light); background: var(--color-bg);
+  border: 1px solid var(--color-border); border-radius: 6px; padding: 2px 8px;
+}
+.wrong-reason {
+  font-size: 13px; line-height: 1.7; color: var(--color-text-light);
+  background: rgba(13,148,136,.07); border-left: 3px solid var(--color-accent);
+  border-radius: 0 6px 6px 0; padding: 8px 12px; margin-bottom: 10px;
+}
+.wrong-reason .wr-label { display: block; font-weight: 700; color: var(--color-accent); margin-bottom: 2px; }
+
+/* ========== 口语 Part3 追问面板 ========== */
+.ss-p3 { margin-top: 12px; }
+.ss-p3-btn { margin-top: 6px; }
+.p3-followups { margin-top: 10px; }
+.p3-followups[data-hidden="true"] { display: none; }
+.p3-followups .p3-item {
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-speaking); border-radius: var(--radius-sm);
+  padding: 10px 12px; margin-bottom: 8px;
+}
+.p3-followups .p3-q { color: var(--color-text); font-weight: 600; }
+.p3-followups .p3-angle { display: inline-block; font-size: 12px; color: var(--color-speaking); margin-bottom: 4px; }
+.p3-tips { font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-top: 8px; padding-left: 18px; }
+.p3-disclaimer { font-size: 12px; color: var(--color-text-light); margin-top: 10px; font-style: italic; }
+
+/* ========== 写作 Task1 图表引导面板 ========== */
+.t1-guide { margin-top: 10px; }
+.t1-guide[data-hidden="true"] { display: none; }
+.t1-guide .t1-block {
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;
+}
+.t1-guide .t1-block h4 { margin: 0 0 6px; font-size: 14px; color: var(--color-writing); }
+.t1-guide .t1-sent { font-size: 13px; color: var(--color-text); padding: 2px 0; }
+.t1-guide .t1-vocab { font-size: 13px; color: var(--color-text-light); }
+.t1-disclaimer { font-size: 12px; color: var(--color-text-light); margin-top: 8px; font-style: italic; }
+
+/* ========== 写作逐句批改批注 ========== */
+.wf-sent { padding: 6px 0; border-bottom: 1px dashed var(--color-border); }
+.wf-text { color: var(--color-text); }
+.wf-annos { margin: 4px 0 0; padding-left: 18px; }
+.wf-anno { font-size: 13px; margin: 2px 0; line-height: 1.6; }
+.wf-anno-type {
+  display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px;
+  border-radius: 4px; margin-right: 6px; color: #fff;
+}
+.wf-vocab .wf-anno-type { background: var(--color-reading); }
+.wf-expression .wf-anno-type { background: var(--color-accent); }
+.wf-grammar .wf-anno-type { background: var(--color-warning); }
+.wf-coherence .wf-anno-type { background: var(--color-listening); }
+.wf-praise .wf-anno-type { background: var(--color-success); }
+.wf-disclaimer { font-size: 12px; color: var(--color-text-light); margin-top: 10px; font-style: italic; }
+
