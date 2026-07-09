@@ -2832,6 +2832,11 @@ body {
 .gr-fb.gr-wrong { background: #fef2f2; color: #991b1b; }
 .gr-explain { font-size: 13px; opacity: .85; margin-top: 4px; }
 .gr-tip { font-size: 12px; color: var(--color-text-light, #64748b); margin-top: 10px; }
+.gr-toggle-all { text-align: right; margin: 0 0 10px; font-size: 13px; color: var(--color-text-light, #64748b); display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.gr-toggle-count { color: var(--color-text-light, #64748b); }
+[data-theme="dark"] .gr-ex-item { background: rgba(255,255,255,.04); }
+[data-theme="dark"] .gr-fb.gr-ok { background: #0a3622; color: #6ee7b7; }
+[data-theme="dark"] .gr-fb.gr-wrong { background: #3b0a0a; color: #fca5a5; }
 
 /* ========== 学习计划 / 每日目标 ========== */
 .plan-card { background: var(--color-card, #fff); border: 1px solid var(--color-border, #e2e8f0); border-radius: var(--radius, 12px); padding: 18px; }
