@@ -299,7 +299,7 @@
       var buttonIcon = currentMode === 'exam' ? '📝' : '📖';
       return (
         '<div class="test-card" data-test="' + test.id + '">' +
-        '<div class="test-card-header"><h3>' + test.title + '</h3>' + favStarHtml(bookId + '-' + test.id) + '<span class="test-arrow">→</span></div>' +
+        '<div class="test-card-header"><h3>' + test.title + bookTag(book) + '</h3>' + favStarHtml(bookId + '-' + test.id) + '<span class="test-arrow">→</span></div>' +
         '<div class="test-sections">' +
         '<div class="test-section-tag">🎧 听力</div>' +
         '<div class="test-section-tag">📖 阅读</div>' +
@@ -732,9 +732,10 @@
     }
     return '<span class="exam-tag tag-fake" title="雅思练习内容，并非剑桥官方真题">' + (text || '📝 非真题') + '</span>';
   }
-  // 依据当前 book 决定徽标：官方样题 / 练习
-  function bookTag() {
-    if (CUR_BOOK && CUR_BOOK.officialSample) {
+  // 依据当前 book 决定徽标：官方样题 / 练习（可接受显式 book，否则回退 CUR_BOOK）
+  function bookTag(book) {
+    var b = book || CUR_BOOK;
+    if (b && b.officialSample) {
       return '<span class="exam-tag tag-official" title="雅思官方免费发布的真实样题（来源：ielts.org 官方 Sample Tasks）">✅ 官方样题</span>';
     }
     return '<span class="exam-tag tag-fake" title="雅思练习内容，并非剑桥官方真题">📝 练习</span>';
