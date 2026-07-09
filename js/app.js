@@ -2796,6 +2796,10 @@
       }
       return false;
     }
+    // 未显式设置过的默认展开，已显式设置为 true/false 则保留用户选择
+    var hasSet = list.every(function (g) { return g.id in grammarOpen; });
+    if (!hasSet) list.forEach(function (g) { grammarOpen[g.id] = true; });
+    var allOpen = list.every(function (g) { return grammarOpen[g.id]; });
     var cards = list.map(function (g) {
       var open = !!grammarOpen[g.id];
       var body = '';
@@ -2821,12 +2825,18 @@
         '<span class="gr-arrow">' + (open ? '▲' : '▼') + '</span></div>' + body + '</div>';
     }).join('');
     app.innerHTML = breadcrumb('语法精讲') +
-      '<div class="dash-header"><h1>📐 语法精讲与自测 ' + examTag(false, '📝 非真题') + '</h1><p>雅思高频语法点讲解 + 即时自测，帮你把“看懂”变成“写对”</p></div>' +
+      '<div class="dash-header"><h1>📐 语法精讲与自测 ' + examTag(false, '📝 非真题') + '</h1><p>雅思高频语法点讲解 + 即时自测，帮你把"看懂"变成"写对"</p></div>' +
       '<div class="gr-disclaimer">⚠️ 本模块为<strong>辅助学习资料</strong>，全部为语法练习，<strong>并非雅思真题</strong>，也不替代真题训练。如需练习真题，请使用剑桥雅思官方原版书。</div>' +
+      '<div class="gr-toggle-all"><button class="btn-small" data-grammar-toggle-all>' + (allOpen ? '全部收起 ▲' : '全部展开 ▼') + '</button> <span class="gr-toggle-count">共 ' + list.length + ' 个专题' + (allOpen ? '，已全部展开' : '，' + list.filter(function(g){return grammarOpen[g.id];}).length + ' 个已展开') + '</span></div>' +
       '<div class="gr-grid">' + cards + '</div>' + backHome();
     bindClick('[data-grammar-toggle]', function (el) {
       var id = el.getAttribute('data-grammar-toggle');
       grammarOpen[id] = !grammarOpen[id];
+      renderGrammar();
+    });
+    bindClick('[data-grammar-toggle-all]', function () {
+      var setAll = !allOpen;
+      list.forEach(function (g) { grammarOpen[g.id] = setAll; });
       renderGrammar();
     });
     bindClick('.gr-check', function (el) {
