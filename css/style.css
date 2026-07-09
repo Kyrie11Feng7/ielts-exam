@@ -2893,10 +2893,10 @@ body {
 [data-theme="dark"] .tag-real { background: rgba(34,197,94,.18); color: #86efac; border-color: rgba(34,197,94,.5); }
 [data-theme="dark"] .tag-fake { background: rgba(251,191,36,.16); color: #fcd34d; border-color: rgba(251,191,36,.5); }
 [data-theme="dark"] .tag-official { background: rgba(34,197,94,.20); color: #86efac; border-color: rgba(34,197,94,.5); }
-.hero-note { margin: 18px auto 0; max-width: 760px; font-size: 13.5px; line-height: 1.7; color: #475569; background: rgba(15,23,42,.04); border: 1px solid rgba(15,23,42,.08); border-radius: 12px; padding: 10px 16px; }
-.hero-note b { color: #15803d; }
-[data-theme="dark"] .hero-note { color: #cbd5e1; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
-[data-theme="dark"] .hero-note b { color: #86efac; }
+.hero-note { margin: 18px auto 0; max-width: 760px; font-size: 14px; line-height: 1.75; color: #ffffff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.32); border-radius: 12px; padding: 11px 16px; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.hero-note b { color: #fff; font-weight: 800; background: rgba(255,255,255,.20); padding: 0 6px; border-radius: 6px; }
+[data-theme="dark"] .hero-note { color: #f8fafc; background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
+[data-theme="dark"] .hero-note b { color: #fff; background: rgba(255,255,255,.18); }
 
 @media (max-width: 600px) {
   #word-popup { width: 92vw; }
