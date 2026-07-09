@@ -5,13 +5,14 @@
  * 注意：这不是剑桥雅思剑 4–19 全量（后者受版权保护，不可转载）；本文件仅含官方免费样题。
  * 加载顺序：须位于 data.js 之后、app.js 之前。
  *
- * 本文件包含 5 套官方样题（均 officialSample:true，逐字来自官方免费发布材料）：
+ * 本文件包含 6 套官方样题（均 officialSample:true，逐字来自官方免费发布材料）：
  *   Test 1  Academic Sample Tasks        —— 听力(Packham) + 学术阅读(rockets/dung beetles) + 学术写作 + 口语
  *   Test 2  General Training Sample A    —— 听力(酒店/社交/Open University) + 培训类阅读 + 培训类写作(信+议论文) + 口语
  *   Test 3  General Training Sample B    —— 听力(艺术中心/选课) + 培训类阅读 + 培训类写作(信+议论文) + 口语
  *   Test 4  官方补充样题·学术写作与口语   —— 学术写作(Task1 图表×2 + Task2 议论文×2) + 口语第二套(来源：British Council / IELTS.org 免费练习)
  *   Test 5  官方补充样题·培训写作与口语   —— 培训类写作(书信 + 议论文) + 口语(来源：British Council / IELTS.org 免费练习)
- * 注：Test 4/5 的听力/阅读原声与文章见雅思官网，故这两套仅含写作+口语官方样题，不编造缺答案密钥的题目。
+ *   Test 6  官方补充样题·培训写作 Test 2  —— 培训类写作 Test 2(丢物品信 + 退休年龄议论文) + 口语第二套(来源：British Council 免费练习)
+ * 注：Test 4/5/6 的听力/阅读原声与文章见雅思官网，故这几套仅含写作+口语官方样题，不编造缺答案密钥的题目。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
@@ -652,6 +653,30 @@
           ]
         },
         speaking: SPK
+      },
+
+      // ===================== Test 6：官方补充样题 · 培训写作 Test 2 =====================
+      // 内容逐字取自 British Council 官方免费练习 Writing Test Two（来源同上，真实官方题目）
+      {
+        id: 6,
+        title: '官方补充样题 · 培训写作 Test 2',
+        writing: {
+          title: '写作 Writing（培训类 General Training）',
+          intro: '雅思官方免费发布的培训类写作样题（真实题目，来源：British Council 免费练习 Test Two）。',
+          tasks: [
+            {
+              task: 'Task 1',
+              type: '小作文（书信）',
+              prompt: 'You have lost an item of value on a train. Write a letter to the railway company. In your letter: describe the item; explain where and when you left it; say what action you would like the company to take. Write at least 150 words. You do NOT need to write any addresses. Begin your letter as follows: Dear Sir or Madam,'
+            },
+            {
+              task: 'Task 2',
+              type: '大作文（议论文）',
+              prompt: 'Some people think that having a set retirement age (e.g. 65 years) for everybody, regardless of occupation, is unfair. They believe that certain workers deserve to retire and receive a pension at an earlier age. Do you agree or disagree? Which types of workers do you think should benefit from early retirement? Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words.'
+            }
+          ]
+        },
+        speaking: SPK2
       }
     ]
   };
