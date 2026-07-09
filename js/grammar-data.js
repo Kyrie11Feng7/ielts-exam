@@ -150,6 +150,88 @@ window.IELTS_GRAMMAR = [
     ]
   },
   {
+    id: 'prepositions',
+    title: '介词搭配（in / on / at / for / to）',
+    icon: '📍',
+    summary: '介词是雅思写作与口语最容易被扣分的细节之一。时间、地点、搭配各有固定规则，错用会影响 GRA 得分。',
+    points: [
+      { rule: 'in + 时间段 / 大范围：in 2020, in the morning, in China。', example: 'The policy was introduced in 2019.' },
+      { rule: 'on + 具体日期/星期：on Monday, on 15 July。', example: 'The survey was conducted on 15 July.' },
+      { rule: 'at + 时刻/小地点：at 9 am, at the station。', example: 'The meeting begins at 10 o\'clock.' },
+      { rule: '固定搭配不易推导，需逐个记忆。常见错：depend on（不是 depend to），good at（不是 good in），interested in（不是 interested at）。', example: 'Success depends on hard work. Not: depends to.' }
+    ],
+    exercises: [
+      { q: 'The graph shows the changes _____ the period from 2000 to 2010.', a: 'during / over', ex: '一段时间内用 during 或 over（如 over the period）。' },
+      { q: 'The majority of students are interested _____ studying abroad.', a: 'in', ex: 'be interested in 是固定搭配。' },
+      { q: 'The conference will be held _____ the Hilton Hotel.', a: 'at', ex: '具体地点（酒店名）用 at。' }
+    ]
+  },
+  {
+    id: 'modals',
+    title: '情态动词（must / should / could / may）',
+    icon: '🔮',
+    summary: '情态动词用于表达推测、义务、建议、可能性，写作 Task 2 和口语 Part 3 中频繁使用，体现 nuanced 表达。',
+    points: [
+      { rule: 'must 表强烈推测（肯定）/ 必须；can\'t 表否定推测（不可能）。', example: 'The trend must be linked to urbanization.' },
+      { rule: 'should / ought to 表建议或期望。', example: 'Governments should invest more in education.' },
+      { rule: 'could / may / might 表可能性（递减 certainty）。写作中常用 It could be argued that… / This may lead to…', example: 'This may result in higher unemployment.' },
+      { rule: '情态动词 + have done 表过去推测：must have done（一定做过）、could have done（本可以做）。', example: 'The policy could have been more effective.' }
+    ],
+    exercises: [
+      { q: 'It _____ be difficult to balance economic growth and environmental protection.', a: 'can / may / could', ex: '表达可能性，三选均可。' },
+      { q: 'The government _____ have invested earlier to avoid the crisis.', a: 'should', ex: 'should have done 表示“本应做而未做”。' },
+      { q: 'This trend _____ not continue if policies change.', a: 'may / might', ex: '未来不确定的可能性用 may/might + not。' }
+    ]
+  },
+  {
+    id: 'inversion',
+    title: '倒装句',
+    icon: '🔄',
+    summary: '倒装是雅思写作的高分句法结构，用于突出强调或正式书面语表达，常见于大作文议论文段。主要类型：否定词前置、only 状语、so/such 结构。',
+    points: [
+      { rule: '否定词/短语（never, seldom, hardly）位于句首时，主谓部分倒装（助动词提前）。', example: 'Seldom has a policy achieved such broad support.' },
+      { rule: '"Not only… but also…" 前句主谓倒装（Not only + aux + subject + verb, but also…）。', example: 'Not only does it create jobs, but it also boosts exports.' },
+      { rule: '"Only + 状语" 位于句首 → 主句倒装。', example: 'Only by working together can we solve the crisis.' }
+    ],
+    exercises: [
+      { q: 'Not only _____ (it / create) jobs, but it also improves living standards.', a: 'does it create', ex: 'Not only 后用部分倒装：助动词 + 主语 + 动词原形。' },
+      { q: 'Only when people understand the risks _____ (they / take) action.', a: 'will they take', ex: 'Only + 状语从句位于句首，主句倒装。' },
+      { q: 'Never _____ (I / see) such a dramatic change.', a: 'have I seen', ex: 'Never 位于句首，用部分倒装 have I seen。' }
+    ]
+  },
+  {
+    id: 'cleft',
+    title: '强调句（It is … that …）',
+    icon: '🔔',
+    summary: '强调句（分裂句）用于突出句子的某个成分，增强论证的清晰度和说服力，是写作 Task 2 和口语 Part 3 的加分句型。',
+    points: [
+      { rule: '基本结构：It is/was + 被强调部分 + that/who + 其余……', example: 'It is education that shapes the future.' },
+      { rule: '强调主语（人）用 who，其他用 that。', example: 'It was the government who/that introduced the policy.' },
+      { rule: '也可用 What 从句强调：What + 从句 + is/was + 成分。', example: 'What matters most is long-term investment.' }
+    ],
+    exercises: [
+      { q: 'It is the younger generation _____ will benefit most from the reform.', a: 'that / who', ex: '强调主语 the younger generation（人），可用 that 或 who。' },
+      { q: '_____ we need is more investment in renewable energy.', a: 'What', ex: 'What 引导名词性从句作主语表强调。' },
+      { q: 'It is only by changing attitudes _____ change is possible.', a: 'that', ex: '强调状语 by changing attitudes，只能用 that。' }
+    ]
+  },
+  {
+    id: 'parallelism',
+    title: '并列与平行结构',
+    icon: '📏',
+    summary: 'and / or / but / not only…but also 连接的成分必须在语法形式上平行一致（如都是名词/doing/to do 等），否则即为"平行结构错误"，会被扣 GRA 分。',
+    points: [
+      { rule: '并列连词（and/or/but）前后词性、结构要一致。', example: '× She likes reading and to write. ✓ She likes reading and writing.' },
+      { rule: '比较对象要可比：compare X with Y，X 与 Y 须同类型。', example: '× The population of China is larger than Japan. ✓ The population of China is larger than that of Japan.' },
+      { rule: 'not only…but also 前后平行。', example: '✓ It not only creates jobs but also improves education.' }
+    ],
+    exercises: [
+      { q: 'The new policy aims to reduce pollution, boost employment, and _____ (improve) healthcare.', a: 'improve', ex: '与 reduce/boost 并列，用原形 improve（也可用 to improve 统一）。' },
+      { q: 'The unemployment rate in City A is higher than _____ of City B.', a: 'that', ex: 'that 代替 the unemployment rate，使比较对象同类型。' },
+      { q: 'Not only does it save money, but it also _____ (protect) the environment.', a: 'protects', ex: 'but also 后接正常的陈述语序，主语 it 用 protects。' }
+    ]
+  },
+  {
     id: 'participles',
     title: '非谓语动词（分词）',
     icon: '🧩',
