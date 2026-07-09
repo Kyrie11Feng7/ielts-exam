@@ -354,7 +354,7 @@
       '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + bookTag() + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
       '<div class="sections-container">' +
       renderListening(test.listening, bookId, testId) +
-      renderReading(test.reading) +
+      renderReading(test.reading, bookId, testId) +
       renderWriting(test.writing, bookId, testId) +
       renderSpeaking(test.speaking, bookId, testId) +
       '</div>' +
@@ -366,7 +366,91 @@
     bindVocabSelection();
     bindSpeakingScorer();
     bindWritingScorer();
+    bindSelfTest();
     window.scrollTo(0, 0);
+  }
+
+  // ========== 练习模式：自测判分 + 错题收集 ==========
+  // 每道听力/阅读题下方都有 .self-test 输入框；点击「检查」复用 scoreAnswer 判分，
+  // 答错则写入本地错题本（补齐 loc/context/difficulty 解析字段），供「智能错题本」归类复习。
+  function bindSelfTest() {
+    document.querySelectorAll('.self-test').forEach(function (block) {
+      var input = block.querySelector('.self-test-input');
+      var btn = block.querySelector('.self-test-check');
+      var fb = block.querySelector('.self-test-fb');
+      if (!input || !btn || !fb) return;
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+
+      function check() {
+        var module = input.dataset.module;
+        var bookId = parseInt(input.dataset.book, 10);
+        var testId = parseInt(input.dataset.test, 10);
+        var idx = parseInt(input.dataset.idx, 10);
+        var qIdx = parseInt(input.dataset.qidx, 10);
+        var userAns = input.value;
+        if (!userAns.trim()) {
+          fb.textContent = '请先输入你的答案';
+          fb.className = 'self-test-fb fb-warn';
+          return;
+        }
+        var book = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+        var test = book && book.tests.find(function (t) { return t.id === testId; });
+        var q, loc = input.dataset.loc || '', context = input.dataset.context || '', difficulty = '';
+        if (module === 'listening') {
+          q = test && test.listening.sections[idx] && test.listening.sections[idx].questions[qIdx];
+        } else {
+          var pas = test && test.reading.passages[idx];
+          q = pas && pas.questions[qIdx];
+          difficulty = pas ? (pas.difficulty || '') : '';
+        }
+        if (!q) {
+          fb.textContent = '题目数据缺失';
+          fb.className = 'self-test-fb fb-warn';
+          return;
+        }
+        var ok = scoreAnswer(q, userAns);
+        if (ok) {
+          fb.innerHTML = '✅ 正确！答案：' + escapeHtml(q.a);
+          fb.className = 'self-test-fb fb-ok';
+          input.classList.remove('st-wrong');
+          input.classList.add('st-ok');
+        } else {
+          fb.innerHTML = '❌ 正确答案：' + escapeHtml(q.a) + '（你的：' + escapeHtml(userAns) + '）';
+          fb.className = 'self-test-fb fb-bad';
+          input.classList.add('st-wrong');
+          input.classList.remove('st-ok');
+          collectSelfTestWrong({
+            module: module, bookId: bookId, testId: testId, idx: idx, qIdx: qIdx,
+            question: q.q, userAnswer: userAns, correctAnswer: q.a, type: q.type || '',
+            loc: loc, context: context, difficulty: difficulty
+          });
+        }
+      }
+
+      btn.addEventListener('click', check);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+    });
+  }
+
+  // 将练习模式自测答错的题写入错题本（与考试错题共用 id 规则避免重复）
+  function collectSelfTestWrong(d) {
+    var wrong = Store.getWrong();
+    var prefix = d.module === 'listening' ? 'L' : 'R';
+    var qKey = prefix + '-' + d.idx + '-' + d.qIdx;
+    var id = d.bookId + '-' + d.testId + '-' + qKey;
+    var rec = {
+      id: id, bookId: d.bookId, testId: d.testId, module: d.module, qKey: qKey,
+      question: d.question, userAnswer: d.userAnswer, correctAnswer: d.correctAnswer,
+      type: d.type, loc: d.loc, context: d.context, difficulty: d.difficulty || '',
+      date: todayStr(), source: 'self'
+    };
+    var existing = wrong.find(function (w) { return w.id === id; });
+    if (existing) { existing.userAnswer = d.userAnswer; existing.date = rec.date; }
+    else wrong.push(rec);
+    Store.setWrong(wrong);
+    updateNavCounts();
+    toast('已收录到错题本');
   }
 
   // ========== 练习模式：听力渲染 ==========
@@ -397,7 +481,11 @@
           (item.type ? '<span class="q-type">' + item.type + '</span> ' : '') +
           '<div class="question-text">' + item.q + '</div>' + optsHtml +
           '<div class="answer-text" data-hidden="true"><span class="answer-label">答案：</span>' + item.a + '</div>' +
-          '<button class="btn-toggle-answer">显示答案</button></div></div>'
+          '<button class="btn-toggle-answer">显示答案</button>' +
+          '<div class="self-test"><input type="text" class="self-test-input" data-module="listening" data-book="' + bookId + '" data-test="' + testId + '" data-idx="' + idx + '" data-qidx="' + qIdx + '" data-loc="' + escapeHtml(section.part) + '" data-context="' + escapeHtml(section.context) + '" data-qtype="' + escapeHtml(item.type || '') + '" data-question="' + escapeHtml(item.q) + '" placeholder="✍️ 自测：输入你的答案">' +
+          '<button class="btn-small self-test-check">检查</button>' +
+          '<span class="self-test-fb"></span></div>' +
+          '</div></div>'
         );
       }).join('');
 
@@ -446,7 +534,7 @@
   }
 
   // ========== 练习模式：阅读渲染 ==========
-  function renderReading(data) {
+  function renderReading(data, bookId, testId) {
     const passagesHtml = data.passages.map(function (passage, idx) {
       var lastInstr = null;
       const questionsHtml = passage.questions.map(function (item, qIdx) {
@@ -465,7 +553,11 @@
           (item.type ? '<span class="q-type">' + item.type + '</span> ' : '') +
           '<div class="question-text">' + item.q + '</div>' + optsHtml +
           '<div class="answer-text" data-hidden="true"><span class="answer-label">答案：</span>' + item.a + '</div>' +
-          '<button class="btn-toggle-answer">显示答案</button></div></div>'
+          '<button class="btn-toggle-answer">显示答案</button>' +
+          '<div class="self-test"><input type="text" class="self-test-input" data-module="reading" data-book="' + bookId + '" data-test="' + testId + '" data-idx="' + idx + '" data-qidx="' + qIdx + '" data-loc="Passage ' + (idx + 1) + '" data-context="' + escapeHtml(passage.title) + '" data-qtype="' + escapeHtml(item.type || '') + '" data-question="' + escapeHtml(item.q) + '" placeholder="✍️ 自测：输入你的答案">' +
+          '<button class="btn-small self-test-check">检查</button>' +
+          '<span class="self-test-fb"></span></div>' +
+          '</div></div>'
         );
       }).join('');
       return (
@@ -1540,14 +1632,29 @@
 
     var wrong = Store.getWrong();
     var newWrongMap = {};
+    var bookRef = IELTS_DATA.books.find(function (b) { return b.id === bookId; });
+    var testRef = bookRef && bookRef.tests.find(function (t) { return t.id === testId; });
     lDetails.concat(rDetails).forEach(function (d) {
       if (!d.isCorrect && d.userAns.trim()) {
+        var loc = '', context = '', difficulty = '';
+        if (d.key.charAt(0) === 'L') {
+          var sec = testRef && testRef.listening.sections[d.sIdx];
+          loc = sec ? sec.part : '';
+          context = sec ? sec.context : '';
+        } else {
+          var pas = testRef && testRef.reading.passages[d.pIdx];
+          loc = pas ? ('Passage ' + (d.pIdx + 1)) : '';
+          context = pas ? pas.title : '';
+          difficulty = pas ? (pas.difficulty || '') : '';
+        }
         newWrongMap[d.key] = {
           id: bookId + '-' + testId + '-' + d.key,
           bookId: bookId, testId: testId,
           module: d.key.charAt(0) === 'L' ? 'listening' : 'reading',
           qKey: d.key, question: d.q.q, userAnswer: d.userAns,
-          correctAnswer: d.q.a, type: d.q.type || '', date: todayStr()
+          correctAnswer: d.q.a, type: d.q.type || '',
+          loc: loc, context: context, difficulty: difficulty,
+          date: todayStr(), source: 'exam'
         };
       }
     });
@@ -1774,6 +1881,7 @@
       '<div class="tool-card" data-nav-page="vocab-test"><div class="tool-icon">📝</div><h3>单词测试</h3></div>' +
       '<div class="tool-card" data-nav-page="vocab"><div class="tool-icon">🔤</div><h3>生词背诵</h3></div>' +
       '<div class="tool-card" data-nav-page="grammar"><div class="tool-icon">📐</div><h3>语法精讲</h3></div>' +
+      '<div class="tool-card" data-nav-page="wrong"><div class="tool-icon">❌</div><h3>智能错题本</h3></div>' +
       '</div></div>';
 
     var statCards =
@@ -1887,11 +1995,39 @@
   }
 
   // ========== 错题本 ==========
+  // 将题型字符串归并为「智能错题本」的分类标签
+  function categorizeType(type) {
+    var t = (type || '').toLowerCase();
+    if (t.indexOf('true/false') !== -1 || t.indexOf('判断题') !== -1) return { cat: 'tfng', label: '判断题 (T/F/NG)' };
+    if (t.indexOf('yes/no') !== -1) return { cat: 'yng', label: '判断题 (Y/N/NG)' };
+    if (t.indexOf('heading') !== -1 || t.indexOf('段落标题') !== -1) return { cat: 'heading', label: '段落标题匹配' };
+    if (t.indexOf('match') !== -1 || t.indexOf('匹配') !== -1) return { cat: 'match', label: '信息 / 细节匹配' };
+    if (t.indexOf('choice') !== -1 || t.indexOf('选择') !== -1) return { cat: 'mcq', label: '选择题' };
+    if (t.indexOf('summary') !== -1 || t.indexOf('完成句子') !== -1 || t.indexOf('填空') !== -1 ||
+        t.indexOf('notes') !== -1 || t.indexOf('form') !== -1 || t.indexOf('table') !== -1 ||
+        t.indexOf('flow') !== -1 || t.indexOf('diagram') !== -1 || t.indexOf('label') !== -1) {
+      return { cat: 'fill', label: '填空 / 完成题' };
+    }
+    return { cat: 'other', label: '其他题型' };
+  }
+
+  // 按题型给出一句复习解析提示（启发式，非官方解析）
+  function wrongReason(w) {
+    var cat = categorizeType(w.type).cat;
+    if (cat === 'tfng' || cat === 'yng') return '仔细比对原文与题干的限定词（always / often / some / may 等），区分 FALSE（直接矛盾）与 NOT GIVEN（原文未提及）；注意题干是否偷换主体。';
+    if (cat === 'fill') return '填空题先读指令确认词数限制，用题干关键词定位原文，注意同义替换与并列 / 修饰结构，抄写时核对拼写与单复数。';
+    if (cat === 'mcq') return '选择题先排除明显错误项，警惕偷换概念或过度推断的干扰项；正确答案多为原文的同义替换。';
+    if (cat === 'match') return '匹配题先读选项再扫读原文定位，关注段落 / 句子主旨与细节的对应关系，避免张冠李戴。';
+    if (cat === 'heading') return '段落标题题抓首尾句与反复出现的核心词，概括段落大意，勿被细节例子带偏。';
+    return '回顾该题型解题步骤：先定位原文，再比对题干与答案，注意拼写、单复数与格式。';
+  }
+
   function renderWrongBook() {
     currentView = { bookId: null, testId: null };
     TTS.stop();
     document.title = '错题本 - 雅思练习库';
     var wrong = Store.getWrong().slice().reverse();
+    var filter = renderWrongBook._filter || 'all';
 
     function bookTestName(item) {
       var bk = IELTS_DATA.books.find(function (b) { return b.id === item.bookId; });
@@ -1900,29 +2036,83 @@
       return bk.fullTitle + ' · ' + (tst ? tst.title : '');
     }
 
-    var listHtml = wrong.length ? wrong.map(function (w, idx) {
+    // 按分类归组（保持固定顺序）
+    var ORDER = [
+      { cat: 'tfng', label: '判断题 (T/F/NG)' },
+      { cat: 'yng', label: '判断题 (Y/N/NG)' },
+      { cat: 'fill', label: '填空 / 完成题' },
+      { cat: 'mcq', label: '选择题' },
+      { cat: 'match', label: '信息 / 细节匹配' },
+      { cat: 'heading', label: '段落标题匹配' },
+      { cat: 'other', label: '其他题型' }
+    ];
+    var groups = {};
+    wrong.forEach(function (w) {
+      var cat = categorizeType(w.type).cat;
+      (groups[cat] = groups[cat] || []).push(w);
+    });
+
+    // 顶部分类筛选标签（仅展示有错题的分类）
+    var presentCats = ORDER.filter(function (o) { return groups[o.cat] && groups[o.cat].length; });
+    var filterHtml = '<div class="wrong-filter">' +
+      '<button class="wf-tab' + (filter === 'all' ? ' active' : '') + '" data-wf="all">全部 (' + wrong.length + ')</button>' +
+      presentCats.map(function (o) {
+        return '<button class="wf-tab' + (filter === o.cat ? ' active' : '') + '" data-wf="' + o.cat + '">' + o.label + ' (' + groups[o.cat].length + ')</button>';
+      }).join('') + '</div>';
+
+    function itemHtml(w) {
+      var tags = '';
+      if (w.loc) tags += '<span class="wrong-tag">📍 ' + escapeHtml(w.loc) + '</span>';
+      if (w.context) tags += '<span class="wrong-tag">📚 ' + escapeHtml(w.context) + '</span>';
+      if (w.difficulty) tags += '<span class="wrong-tag">⏱ ' + escapeHtml(w.difficulty) + '</span>';
       return '<div class="wrong-item" data-wid="' + w.id + '">' +
         '<div class="wrong-head"><span class="wrong-mod">' + (w.module === 'listening' ? '🎧 听力' : '📖 阅读') + '</span>' +
         '<span class="wrong-src">' + bookTestName(w) + '</span><span class="wrong-date">' + w.date + '</span></div>' +
+        (tags ? '<div class="wrong-tags">' + tags + '</div>' : '') +
         '<div class="wrong-q">' + escapeHtml(w.question) + '</div>' +
         '<div class="wrong-answers"><div class="detail-user">你的答案：<span>' + escapeHtml(w.userAnswer) + '</span></div>' +
         '<div class="detail-correct">正确答案：<span>' + escapeHtml(w.correctAnswer) + '</span></div></div>' +
+        '<div class="wrong-reason"><span class="wr-label">📝 复习提示</span>' + escapeHtml(wrongReason(w)) + '</div>' +
         '<div class="wrong-actions">' +
         '<button class="btn-small btn-redo" data-start-exam data-book="' + w.bookId + '" data-test="' + w.testId + '">🔁 重做此题</button>' +
         '<button class="btn-small btn-del-wrong" data-wid="' + w.id + '">🗑 移除</button></div></div>';
-    }).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><h2>还没有错题</h2><p>完成模拟考试后，答错的题目会自动收集到这里</p></div>';
+    }
+
+    var bodyHtml;
+    if (!wrong.length) {
+      bodyHtml = '<div class="empty-state"><div class="empty-icon">✅</div><h2>还没有错题</h2><p>完成模拟考试、或在练习模式自测答错后，题目会自动收集到这里</p></div>';
+    } else if (filter === 'all') {
+      bodyHtml = presentCats.map(function (o) {
+        return '<div class="wrong-cat"><h3 class="wrong-cat-title">' + o.label + ' <span class="wrong-cat-count">' + groups[o.cat].length + '</span></h3>' +
+          '<div class="wrong-list">' + groups[o.cat].map(itemHtml).join('') + '</div></div>';
+      }).join('');
+    } else {
+      var g = groups[filter] || [];
+      bodyHtml = g.length
+        ? '<div class="wrong-list">' + g.map(itemHtml).join('') + '</div>'
+        : '<div class="empty-state"><div class="empty-icon">📭</div><h2>该分类暂无错题</h2></div>';
+    }
 
     app.innerHTML =
       '<div class="breadcrumb"><a href="#" data-nav-page="home">首页</a><span class="sep">/</span><span>错题本</span></div>' +
-      '<div class="dash-header"><h1>❌ 我的错题本</h1><p>共 ' + wrong.length + ' 道错题 · 重做巩固薄弱环节</p></div>' +
-      '<div class="wrong-list">' + listHtml + '</div>' +
+      '<div class="dash-header"><h1>❌ 智能错题本</h1><p>共 ' + wrong.length + ' 道错题 · 按题型归类复习 · 重做巩固薄弱环节</p></div>' +
+      filterHtml +
+      bodyHtml +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav-page="home">← 返回首页</button></div>';
 
+    document.querySelectorAll('.wf-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        renderWrongBook._filter = btn.getAttribute('data-wf');
+        renderWrongBook();
+        window.scrollTo(0, 0);
+      });
+    });
     document.querySelectorAll('.btn-del-wrong').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var id = this.getAttribute('data-wid');
         var arr = Store.getWrong().filter(function (w) { return w.id !== id; });
         Store.setWrong(arr);
+        renderWrongBook._filter = filter;
         renderWrongBook();
         updateNavCounts();
       });
@@ -2426,6 +2616,7 @@
       '</div>' +
       '<div class="ss-playback"></div>' +
       '<div class="ss-result"></div>' +
+      (part === 'Part 3' ? '<div class="ss-p3"><button class="btn-small ss-p3-btn">💡 深度追问与拓展</button><div class="p3-followups" data-hidden="true"></div></div>' : '') +
     '</div>';
   }
 
@@ -2510,6 +2701,24 @@
         var pron = (pronRaw === '' || pronRaw == null) ? null : parseFloat(pronRaw);
         doScore(text, dur, null, pron);
       });
+
+      var p3Btn = el.querySelector('.ss-p3-btn');
+      var p3Box = el.querySelector('.p3-followups');
+      if (p3Btn && p3Box) {
+        p3Btn.addEventListener('click', function () {
+          if (p3Box.dataset.loaded) { p3Box.setAttribute('data-hidden', p3Box.getAttribute('data-hidden') === 'true' ? 'false' : 'true'); return; }
+          if (!window.IELTS_SPEAKING_PART3) { toast('追问引擎未加载'); return; }
+          var res = window.IELTS_SPEAKING_PART3.analyze({ topic: (el.getAttribute('data-rec-key') || ''), prompt: prompt });
+          var fhtml = res.followups.map(function (f) { return '<li><span class="p3-angle">' + escapeHtml(f.angle) + '</span> ' + escapeHtml(f.q) + '</li>'; }).join('');
+          var thtml = res.tips.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+          p3Box.innerHTML = '<div class="p3-title">💡 Part 3 深度追问（练习参考，非真实考官题）</div>' +
+            '<ul class="p3-list">' + fhtml + '</ul>' +
+            '<div class="p3-title">🧭 拓展提示</div><ul class="p3-tips">' + thtml + '</ul>' +
+            '<div class="p3-disclaimer">⚠️ 以上为基于雅思 Part 3 考查逻辑生成的练习用延伸讨论提示，并非真实考官题目，不替代真人考官或老师的追问。</div>';
+          p3Box.dataset.loaded = '1';
+          p3Box.setAttribute('data-hidden', 'false');
+        });
+      }
 
       if (!(recBtn && hasSR)) return;
 
@@ -2599,6 +2808,7 @@
     var ph = (presetText && presetText.length) ? escapeHtml(presetText) : '';
     return '<div class="write-scorer" data-rec-key="' + escapeHtml(recKey) + '" data-task="' + taskType + '" data-prompt="' + escapeHtml(prompt || '') + '" data-min="' + minWords + '">' +
       '<div class="ws-tip">✍️ 按雅思官方写作四项标准（任务完成/回应 · 连贯衔接 · 词汇 · 语法）自动评分，<b>仅供练习参考</b></div>' +
+      (taskType === 'Task 1' ? '<button class="btn-small ws-t1-btn">📊 图表描述引导</button><div class="t1-guide" data-hidden="true"></div>' : '') +
       '<textarea class="ss-textarea ws-textarea" placeholder="把你的英文作文粘贴/写在这里进行评分（' + taskType + ' 建议 ≥' + minWords + ' 词）…">' + ph + '</textarea>' +
       '<div class="ws-row"><span class="ws-count">0 词</span><button class="btn-small ws-score-btn">开始评分</button></div>' +
       '<div class="ss-result"></div>' +
@@ -2607,6 +2817,7 @@
 
   function renderWritingScoreResult(container, r, meta) {
     if (!container) return;
+    function wfAnnoType(t) { return ({ vocab: '词汇', expression: '表达', grammar: '语法', coherence: '连贯', praise: '亮点' })[t] || t; }
     function gauge(k) {
       var cr = r.criteria[k];
       var pct = Math.round(Math.min(9, Math.max(0, cr.band)) / 9 * 100);
@@ -2618,11 +2829,33 @@
         '<div class="ss-crit-desc">' + escapeHtml(cr.desc) + '</div>' +
         (fb ? '<ul class="ss-fb">' + fb + '</ul>' : '') + '</div>';
     }
+    var feedbackHtml = '';
+    if (r.text && window.IELTS_WRITING_FEEDBACK) {
+      try {
+        var fb = window.IELTS_WRITING_FEEDBACK.analyze(r.text, r.taskType);
+        if (!fb.empty && fb.totalAnnotations > 0) {
+          var paras = fb.paragraphs.map(function (p) {
+            var sents = p.sentences.map(function (s) {
+              if (!s.annotations.length) return '<div class="wf-sent"><span class="wf-text">' + escapeHtml(s.text) + '</span></div>';
+              var ann = s.annotations.map(function (a) {
+                var cls = a.severity === 'good' ? 'good' : (a.severity === 'warn' ? 'warn' : 'sug');
+                return '<li class="wf-anno wf-' + cls + '"><span class="wf-anno-type">' + wfAnnoType(a.type) + '</span> ' + escapeHtml(a.tip) + '</li>';
+              }).join('');
+              return '<div class="wf-sent"><span class="wf-text">' + escapeHtml(s.text) + '</span><ul class="wf-annos">' + ann + '</ul></div>';
+            }).join('');
+            return '<div class="wf-para">' + sents + '</div>';
+          }).join('');
+          feedbackHtml = '<div class="wf-feedback"><div class="wf-feedback-head">✍️ 逐句批改批注（' + fb.totalAnnotations + ' 条 · 练习参考）</div>' + paras +
+            '<div class="wf-disclaimer">⚠️ 以上为基于规则的正向/改进提示（词汇升级、语法弱信号、连贯建议等），属启发式辅助，不能替代人工批改或考官评分。</div></div>';
+        }
+      } catch (e) {}
+    }
     container.innerHTML = '<div class="ss-result-inner">' +
       '<div class="ss-overall"><div class="ss-overall-num band-text-' + bandClass(r.overall) + '">' + r.overall.toFixed(1) + '</div>' +
       '<div class="ss-overall-label">总体得分 Overall Band (' + escapeHtml(r.taskType) + ')</div></div>' +
       '<div class="ss-gauges">' + gauge('ta') + gauge('cc') + gauge('lr') + gauge('gra') + '</div>' +
       '<div class="ss-disclaimer">⚠️ 本评分按雅思官方写作四项标准自动评估，<b>仅供练习参考</b>：依据你的作文文本做字数、词汇、句式、衔接与任务覆盖等语言学分析，<b>不能替代雅思考官或写作批改老师的人工评分</b>（无法判断论证深度与逻辑漏洞）。建议结合官方范文与人工反馈持续改进。</div>' +
+      feedbackHtml +
       '</div>';
     container.style.display = '';
   }
@@ -2668,6 +2901,25 @@
         renderWritingScoreResult(resultBox, res, { taskType: taskType });
         saveWritingScore(res, taskType);
       });
+      var t1Btn = el.querySelector('.ws-t1-btn');
+      var t1Box = el.querySelector('.t1-guide');
+      if (t1Btn && t1Box) {
+        t1Btn.addEventListener('click', function () {
+          if (t1Box.dataset.loaded) { t1Box.setAttribute('data-hidden', t1Box.getAttribute('data-hidden') === 'true' ? 'false' : 'true'); return; }
+          if (!window.IELTS_TASK1_GUIDE) { toast('图表引导引擎未加载'); return; }
+          var res = window.IELTS_TASK1_GUIDE.analyze(prompt);
+          var sentHtml = res.sentences.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('');
+          var vocHtml = res.vocab.map(function (v) { return '<span class="conn-chip">' + escapeHtml(v) + '</span>'; }).join('');
+          t1Box.innerHTML = '<div class="t1-head">📊 识别图表类型：<b>' + escapeHtml(res.chartType) + '</b> <span class="t1-desc">' + escapeHtml(res.chartDesc) + '</span></div>' +
+            '<div class="t1-block"><div class="t1-sub">🔍 概览段要点</div><p>' + escapeHtml(res.overview) + '</p></div>' +
+            '<div class="t1-block"><div class="t1-sub">🧱 细节段要点</div><p>' + escapeHtml(res.detail) + '</p></div>' +
+            '<div class="t1-block"><div class="t1-sub">📝 常用句型</div><ul class="t1-sent">' + sentHtml + '</ul></div>' +
+            '<div class="t1-block"><div class="t1-sub">🔑 核心词汇</div><div class="t1-voc">' + vocHtml + '</div></div>' +
+            '<div class="t1-disclaimer">⚠️ 模板与句型为练习参考，具体描述须依据真实图表数据；识别基于题干关键词，若不符请手动判断图表类型。</div>';
+          t1Box.dataset.loaded = '1';
+          t1Box.setAttribute('data-hidden', 'false');
+        });
+      }
     });
   }
 
