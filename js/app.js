@@ -178,7 +178,7 @@
         '<div class="book-year">' + book.year + '</div>' +
         '</div>' +
         '<div class="book-card-body">' +
-        '<h3>' + book.fullTitle + (book.officialSample ? ' <span class="exam-tag tag-official">✅ 官方样题</span>' : '') + '</h3>' +
+        '<h3>' + book.fullTitle + (book.officialSample ? ' <span class="exam-tag tag-official">✅ 官方样题</span>' : ' <span class="exam-tag tag-fake">📝 练习</span>') + '</h3>' +
         '<p class="book-desc">' + book.desc + '</p>' +
         badge +
         '</div>' +
@@ -315,7 +315,7 @@
       '<div class="breadcrumb"><a href="#" data-nav="home">首页</a><span class="sep">/</span><span>' + book.fullTitle + '</span></div>' +
       '<div class="book-header">' +
       '<div class="book-header-number">' + book.title + '</div>' +
-      '<div class="book-header-info"><h1>' + book.fullTitle + '</h1><p>' + book.desc + ' · 共 ' + book.tests.length + ' 套完整试题</p></div>' +
+      '<div class="book-header-info"><h1>' + book.fullTitle + ' ' + bookTag(book) + '</h1><p>' + book.desc + ' · 共 ' + book.tests.length + ' 套完整试题</p></div>' +
       '</div>' +
       '<div class="tests-grid">' + testCards + '</div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav="home">← 返回首页</button></div>';
