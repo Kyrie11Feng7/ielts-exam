@@ -351,12 +351,12 @@
       '<a href="#" data-nav="home">首页</a><span class="sep">/</span>' +
       '<a href="#" data-nav="book" data-book="' + bookId + '">' + book.fullTitle + '</a><span class="sep">/</span>' +
       '<span>' + test.title + '</span></div>' +
-      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + bookTag() + '</h1><p>完整四部分试题，点击各模块查看题目与答案</p></div>' +
+      '<div class="test-header"><h1>' + book.fullTitle + ' · ' + test.title + ' ' + bookTag() + '</h1><p>点击各模块查看题目与答案（听力/阅读原声与文章见雅思官网）</p></div>' +
       '<div class="sections-container">' +
-      renderListening(test.listening, bookId, testId) +
-      renderReading(test.reading, bookId, testId) +
-      renderWriting(test.writing, bookId, testId) +
-      renderSpeaking(test.speaking, bookId, testId) +
+      (test.listening ? renderListening(test.listening, bookId, testId) : '') +
+      (test.reading ? renderReading(test.reading, bookId, testId) : '') +
+      (test.writing ? renderWriting(test.writing, bookId, testId) : '') +
+      (test.speaking ? renderSpeaking(test.speaking, bookId, testId) : '') +
       '</div>' +
       '<div style="text-align:center; margin-top:32px;"><button class="btn-back" data-nav="book" data-book="' + bookId + '">← 返回' + book.fullTitle + '</button></div>';
 
