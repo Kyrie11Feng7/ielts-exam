@@ -5,10 +5,13 @@
  * 注意：这不是剑桥雅思剑 4–19 全量（后者受版权保护，不可转载）；本文件仅含官方免费样题。
  * 加载顺序：须位于 data.js 之后、app.js 之前。
  *
- * 本文件包含 3 套官方样题（均 officialSample:true，逐字来自官方 PDF）：
+ * 本文件包含 5 套官方样题（均 officialSample:true，逐字来自官方免费发布材料）：
  *   Test 1  Academic Sample Tasks        —— 听力(Packham) + 学术阅读(rockets/dung beetles) + 学术写作 + 口语
  *   Test 2  General Training Sample A    —— 听力(酒店/社交/Open University) + 培训类阅读 + 培训类写作(信+议论文) + 口语
  *   Test 3  General Training Sample B    —— 听力(艺术中心/选课) + 培训类阅读 + 培训类写作(信+议论文) + 口语
+ *   Test 4  官方补充样题·学术写作与口语   —— 学术写作(Task1 图表×2 + Task2 议论文×2) + 口语第二套(来源：British Council / IELTS.org 免费练习)
+ *   Test 5  官方补充样题·培训写作与口语   —— 培训类写作(书信 + 议论文) + 口语(来源：British Council / IELTS.org 免费练习)
+ * 注：Test 4/5 的听力/阅读原声与文章见雅思官网，故这两套仅含写作+口语官方样题，不编造缺答案密钥的题目。
  */
 (function () {
   if (typeof IELTS_DATA === 'undefined') return;
@@ -51,6 +54,55 @@
           { q: 'What kind of things give status to people in your country?', a: '' },
           { q: 'Have things changed since your parents’ time?', a: '' },
           { q: 'Do you think advertising influences what people buy?', a: '' }
+        ]
+      }
+    ]
+  };
+
+  // 口语官方样题（第二套，来源：British Council / IELTS.org 免费练习）
+  var SPK2 = {
+    title: '口语 Speaking',
+    intro: '雅思官方免费发布的口语样题（真实题目，来源：British Council / IELTS.org 免费练习）',
+    parts: [
+      {
+        part: 'Part 1',
+        questions: [
+          { q: 'Are you a student or do you work?', a: '' },
+          { q: 'What is your place of work like?', a: '' },
+          { q: 'What do you like about your job?', a: '' },
+          { q: 'Is there anything you don’t like about your job?', a: '' },
+          { q: 'Do you have a lot of free time?', a: '' },
+          { q: 'Do you spend your free time outside?', a: '' },
+          { q: 'What sort of things do you like doing outside?', a: '' },
+          { q: 'Is there a free time activity you would like to try in the future?', a: '' },
+          { q: 'Do you like animals?', a: '' },
+          { q: 'Do you have any animals in your home as a pet?', a: '' },
+          { q: 'Did you have a pet when you were a child?', a: '' },
+          { q: 'Would you like to have a pet in the future?', a: '' }
+        ]
+      },
+      {
+        part: 'Part 2',
+        cueCard:
+          'Describe a special event or festival that you liked.\n' +
+          'Say:\n' +
+          '– what the event was\n' +
+          '– where it was\n' +
+          '– what happened\n' +
+          'and say why you liked it.\n' +
+          'You have one minute to think about what you’re going to say. You can make some notes to help you if you wish.',
+        questions: [
+          { q: 'Did the other people also enjoy this event?', a: '' }
+        ]
+      },
+      {
+        part: 'Part 3',
+        questions: [
+          { q: 'Why do you think celebrations are important in society?', a: '' },
+          { q: 'Do you think celebrations are experienced differently by the different generations?', a: '' },
+          { q: 'Do you think International events help to promote cooperation and collaboration between countries?', a: '' },
+          { q: 'Do you think international sporting events are more popular with the older or younger generation?', a: '' },
+          { q: 'Do you think we will see changes in the future to international events? And if so, what sort of changes might we see?', a: '' }
         ]
       }
     ]
@@ -539,6 +591,63 @@
               task: 'Task 2',
               type: '大作文（议论文）',
               prompt: 'Shopping is becoming more and more popular as a leisure activity. However, some people feel that this has both positive and negative effects. Why is shopping so popular? What effects does its increase in popularity have on individuals and on society? Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words.'
+            }
+          ]
+        },
+        speaking: SPK
+      },
+
+      // ===================== Test 4：官方补充样题 · 学术写作与口语 =====================
+      // 内容逐字取自 British Council / IELTS.org 官方免费练习（听力/阅读原声与文章见官网，故本套仅含写作+口语）
+      {
+        id: 4,
+        title: '官方补充样题 · 学术写作与口语',
+        writing: {
+          title: '写作 Writing（学术类）',
+          intro: '雅思官方免费发布的学术写作样题（真实题目，来源：British Council / IELTS.org 免费练习）。Task 1 配图请参见雅思官方样题页面。',
+          tasks: [
+            {
+              task: 'Task 1',
+              type: '小作文（图表 / 流程 / 地图）',
+              prompt: 'The graph below shows the proportion of four different materials that were recycled from 1982 to 2010 in a particular country. Summarise the information by selecting and reporting the main features, making comparisons where relevant. Write at least 150 words.'
+            },
+            {
+              task: 'Task 2',
+              type: '大作文（议论文）',
+              prompt: 'Learning English at school is often seen as more important than learning local languages. If these are not taught, many are at risk of dying out. In your opinion, is it important for everyone to learn English? Should we try to ensure the survival of local languages and, if so, how? Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words.'
+            },
+            {
+              task: 'Task 1',
+              type: '小作文（图表 / 流程 / 地图）',
+              prompt: 'The graph below shows the population of India and China from the year 2000 to the present day with projections for growth to the year 2050. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least 150 words.'
+            },
+            {
+              task: 'Task 2',
+              type: '大作文（议论文）',
+              prompt: 'Many people go through life doing work that they hate or have no talent for. Why does this happen? What are the consequences of this situation? Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words.'
+            }
+          ]
+        },
+        speaking: SPK2
+      },
+
+      // ===================== Test 5：官方补充样题 · 培训写作与口语 =====================
+      {
+        id: 5,
+        title: '官方补充样题 · 培训写作与口语',
+        writing: {
+          title: '写作 Writing（培训类 General Training）',
+          intro: '雅思官方免费发布的培训类写作样题（真实题目，来源：British Council / IELTS.org 免费练习）。',
+          tasks: [
+            {
+              task: 'Task 1',
+              type: '小作文（书信）',
+              prompt: 'A friend has agreed to look after your house and pet while you are on holiday. Write a letter to your friend. In your letter: give contact details for when you are away; give instructions about how to care for your pet; describe other household duties you would like your friend to undertake. You do NOT need to write any addresses. Begin your letter as follows: Dear .......,'
+            },
+            {
+              task: 'Task 2',
+              type: '大作文（议论文）',
+              prompt: 'Some people believe that teaching children at home is best for a child’s development while others think that it is important for children to go to school. Discuss the advantages of both methods and give your own opinion. Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words.'
             }
           ]
         },
