@@ -2971,3 +2971,31 @@ body {
 .ss-hist-meta { font-size: 13px; color: var(--color-text-light); margin-bottom: 4px; }
 .ss-hist-bands { font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
 .ss-hist-prev { font-size: 12.5px; color: var(--color-text-light); line-height: 1.5; font-style: italic; }
+
+/* ========== 写作四项标准评分面板 ========== */
+.ws-embed { margin-top: 16px; border-top: 1px dashed var(--color-border); padding-top: 14px; }
+.write-scorer { background: rgba(99,102,241,.04); border: 1px solid var(--color-border); border-radius: 14px; padding: 14px 16px; }
+[data-theme="dark"] .write-scorer { background: rgba(129,140,248,.08); }
+.ws-tip { font-size: 12.5px; color: var(--color-text-light); margin-bottom: 10px; line-height: 1.6; }
+.ws-tip b { color: var(--color-accent, #6366f1); }
+.ws-textarea { width: 100%; min-height: 120px; resize: vertical; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 14px; line-height: 1.6; font-family: inherit; background: var(--color-bg); color: var(--color-text); box-sizing: border-box; }
+.ws-textarea:focus { outline: none; border-color: var(--color-accent, #6366f1); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+.ws-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 12px; }
+.ws-count { font-size: 13px; color: var(--color-text-light); font-weight: 600; }
+.ws-score-btn { background: var(--color-accent, #6366f1); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ws-score-btn:hover { opacity: .9; }
+.ws-empty { margin-top: 12px; font-size: 13px; color: var(--color-text-light); background: rgba(245,158,11,.08); border: 1px dashed rgba(245,158,11,.3); border-radius: 10px; padding: 10px 12px; }
+
+/* ========== 仪表盘：口语/写作自评进步 ========== */
+.self-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 12px; }
+.self-card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 14px; padding: 18px; text-align: center; transition: transform .15s, box-shadow .15s; }
+.self-card[data-nav-page]:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.self-card.empty { opacity: .7; }
+.self-icon { font-size: 30px; margin-bottom: 6px; }
+.self-name { font-size: 15px; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
+.self-num { font-size: 38px; font-weight: 800; line-height: 1; }
+.self-sub { font-size: 12.5px; color: var(--color-text-light); margin-top: 6px; }
+.self-empty { font-size: 13px; color: var(--color-text-light); }
+.self-tip { font-size: 12px; color: var(--color-text-light); margin-top: 10px; line-height: 1.6; }
+
+@media (max-width: 560px) { .self-grid { grid-template-columns: 1fr; } }
